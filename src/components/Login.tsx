@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { userAPI } from '../utils/api';
+
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: string;
+  created_at: string;
+}
 
 interface LoginProps {
   onBack: () => void;
-  onLogin: () => void;
+  onLogin: (token: string, user: User) => void;
   onSwitchToSignup: () => void;
 }
 
@@ -13,11 +22,33 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
     email: '',
     password: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate login
-    onLogin();
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await userAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      // Store token and user info
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userJustLoggedIn', 'true'); // Set flag for countdown reset
+      onLogin(data.token, data.user);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Login failed');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,6 +79,34 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-600 text-white p-3 rounded mb-4 text-center">
+                {error}
+              </div>
+            )}
+            
+            {/* Admin Testing Info */}
+            <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-3 text-center">
+              <p className="text-blue-400 text-sm font-medium mb-2">👑 Admin Testing Credentials</p>
+              <div className="flex items-center justify-between text-xs">
+                <div>
+                  <p className="text-blue-300">Email: admin@cryptominepro.com</p>
+                  <p className="text-blue-300">Password: Admin@123</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormData({ 
+                    email: 'admin@cryptominepro.com', 
+                    password: 'Admin@123' 
+                  })}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                >
+                  Quick Fill
+                </button>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">Use these credentials to access the admin dashboard</p>
+            </div>
+
             <div>
               <label className="block text-slate-400 text-sm font-medium mb-2">
                 Email Address

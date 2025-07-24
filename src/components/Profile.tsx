@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, User, Mail, Phone, Shield, Bell, CreditCard, Users, HelpCircle, LogOut, Edit3, Check, X } from 'lucide-react';
+import { userAPI, purchaseAPI, referralAPI } from '../utils/api';
 
 interface ProfileProps {
   onBack: () => void;
@@ -10,12 +11,12 @@ export const Profile = ({ onBack, onLogout }: ProfileProps) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [editingField, setEditingField] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+254700000000',
-    joined: '2024-12-15',
-    verified: true
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    joined: '',
+    verified: false
   });
 
   const [notifications, setNotifications] = useState({
@@ -27,6 +28,61 @@ export const Profile = ({ onBack, onLogout }: ProfileProps) => {
   });
 
   const [tempValue, setTempValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userStats, setUserStats] = useState({
+    totalDeposits: '0.00',
+    totalWithdrawals: '0.00', 
+    activeInvestments: '0',
+    totalReferrals: '0'
+  });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await userAPI.getProfile();
+        const user = response.user;
+        const [firstName, ...lastNameParts] = user.full_name.split(' ');
+        setProfileData({
+          firstName: firstName || '',
+          lastName: lastNameParts.join(' ') || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          joined: user.created_at?.split('T')[0] || '',
+          verified: user.status === 'active'
+        });
+
+        // Fetch user statistics in parallel
+        try {
+          const [purchasesResponse, referralResponse] = await Promise.all([
+            purchaseAPI.getUserPurchases().catch(() => ({ purchases: [] })),
+            referralAPI.getReferralInfo().catch(() => ({ referrals: [] }))
+          ]);
+
+          const activeInvestments = purchasesResponse.purchases.filter(
+            (p: any) => p.status === 'active'
+          ).length;
+
+          setUserStats({
+            totalDeposits: user.total_deposits || '0.00',
+            totalWithdrawals: user.total_withdrawals || '0.00',
+            activeInvestments: activeInvestments.toString(),
+            totalReferrals: referralResponse.referrals?.length?.toString() || '0'
+          });
+        } catch {
+          // If stats fail, keep default values
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleEdit = (field: string) => {
     setEditingField(field);
@@ -54,10 +110,10 @@ export const Profile = ({ onBack, onLogout }: ProfileProps) => {
   ];
 
   const statsData = [
-    { label: 'Total Deposits', value: 'KES 45,230', color: 'text-green-500' },
-    { label: 'Total Withdrawals', value: 'KES 12,450', color: 'text-blue-500' },
-    { label: 'Active Investments', value: '3', color: 'text-orange-500' },
-    { label: 'Referrals', value: '7', color: 'text-purple-500' }
+    { label: 'Total Deposits', value: `KES ${userStats.totalDeposits}`, color: 'text-green-500' },
+    { label: 'Total Withdrawals', value: `KES ${userStats.totalWithdrawals}`, color: 'text-blue-500' },
+    { label: 'Active Investments', value: userStats.activeInvestments, color: 'text-orange-500' },
+    { label: 'Referrals', value: userStats.totalReferrals, color: 'text-purple-500' }
   ];
 
   return (
@@ -177,7 +233,7 @@ export const Profile = ({ onBack, onLogout }: ProfileProps) => {
                 {/* Last Name */}
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <label className="text-slate-400 text-sm">Last Name</label>
+                    <label className="text-slate-400 text-sm font-medium mb-2">Last Name</label>
                     {editingField === 'lastName' ? (
                       <div className="flex items-center space-x-2 mt-1">
                         <input
