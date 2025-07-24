@@ -14,9 +14,10 @@ interface SignupProps {
   onBack: () => void;
   onSignup: (token: string, user: User) => void;
   onSwitchToLogin: () => void;
+  onShowEmailVerification: (email: string) => void;
 }
 
-export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
+export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerification }: SignupProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,6 +32,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   // Handle referral URL parameters
   useEffect(() => {
@@ -44,6 +46,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
     
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -66,13 +69,21 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
         referred_by: formData.referralCode || undefined
       });
       
+      // Check if registration returns a token (direct login) or requires email verification
       if (data.token && data.user) {
+        // Direct login - user is already verified or verification is disabled
         localStorage.setItem('token', data.token);
-        localStorage.setItem('userJustLoggedIn', 'true'); // Set flag for countdown reset
+        localStorage.setItem('userJustLoggedIn', 'true');
         onSignup(data.token, data.user);
+      } else if (data.user && data.message && data.emailSent) {
+        // Email verification required - show verification screen
+        setMessage(data.message);
+        setTimeout(() => {
+          onShowEmailVerification(formData.email);
+        }, 2000);
       } else {
-        // Registration successful but needs verification - redirect to login
-        setError('Registration successful! Please check your email to verify your account.');
+        // Fallback - show success message and redirect to login
+        setMessage('Registration successful! Please check your email to verify your account.');
         setTimeout(() => {
           onSwitchToLogin();
         }, 2000);
@@ -115,8 +126,14 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-600 text-white p-3 rounded mb-4 text-center">
-                {error}
+              <div className="bg-red-600/20 border border-red-500/30 rounded-lg p-3 text-center">
+                <p className="text-red-400 font-medium">{error}</p>
+              </div>
+            )}
+
+            {message && (
+              <div className="bg-green-600/20 border border-green-500/30 rounded-lg p-3 text-center">
+                <p className="text-green-400 font-medium">{message}</p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">

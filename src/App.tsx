@@ -8,6 +8,7 @@ import { Navigation } from './components/Navigation';
 import { Header } from './components/Header';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
+import { EmailVerification } from './components/EmailVerification';
 import { Profile } from './components/Profile';
 import { Support } from './components/Support';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -24,10 +25,11 @@ interface User {
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support'>('login');
+  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification'>('login');
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [verificationEmail, setVerificationEmail] = useState<string>('');
 
   // Check authentication on app load
   useEffect(() => {
@@ -72,7 +74,7 @@ function App() {
     checkAuth();
   }, []);
 
-    const handleLogin = (token: string, userData: User) => {
+    const handleLogin = (_token: string, userData: User) => {
     // Ensure created_at field exists, provide default if missing
     const userWithCreatedAt = {
       ...userData,
@@ -91,7 +93,7 @@ function App() {
     }
   };
 
-  const handleSignup = (token: string, userData: User) => {
+  const handleSignup = (_token: string, userData: User) => {
     // Ensure created_at field exists, provide default if missing
     const userWithCreatedAt = {
       ...userData,
@@ -111,6 +113,16 @@ function App() {
     setIsAuthenticated(false);
     setCurrentView('login');
     setActiveTab('dashboard');
+  };
+
+  const handleShowEmailVerification = (email: string) => {
+    setVerificationEmail(email);
+    setCurrentView('email-verification');
+  };
+
+  const handleVerificationComplete = () => {
+    setCurrentView('login');
+    setVerificationEmail('');
   };
 
   // Handle "Activate Mine" button click from Dashboard
@@ -141,6 +153,17 @@ function App() {
           onBack={() => setCurrentView('login')}
           onSignup={handleSignup}
           onSwitchToLogin={() => setCurrentView('login')}
+          onShowEmailVerification={handleShowEmailVerification}
+        />
+      );
+    }
+
+    if (currentView === 'email-verification') {
+      return (
+        <EmailVerification
+          email={verificationEmail}
+          onBack={() => setCurrentView('login')}
+          onVerificationComplete={handleVerificationComplete}
         />
       );
     }
@@ -151,6 +174,7 @@ function App() {
         onBack={() => setCurrentView('login')}
         onLogin={handleLogin}
         onSwitchToSignup={() => setCurrentView('signup')}
+        onShowEmailVerification={handleShowEmailVerification}
       />
     );
   }
@@ -237,6 +261,7 @@ function App() {
       onBack={() => setCurrentView('login')}
       onLogin={handleLogin}
       onSwitchToSignup={() => setCurrentView('signup')}
+      onShowEmailVerification={handleShowEmailVerification}
     />
   );
 }

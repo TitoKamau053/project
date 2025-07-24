@@ -14,9 +14,10 @@ interface LoginProps {
   onBack: () => void;
   onLogin: (token: string, user: User) => void;
   onSwitchToSignup: () => void;
+  onShowEmailVerification: (email: string) => void;
 }
 
-export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
+export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerification }: LoginProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -24,11 +25,14 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowResendVerification(false);
     
     try {
       const data = await userAPI.login({
@@ -42,13 +46,52 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
       onLogin(data.token, data.user);
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        const errorMessage = err.message;
+        
+        // Check if this is an email verification error
+        if (errorMessage.includes('verify your email') || 
+            errorMessage.includes('email verification') ||
+            errorMessage.includes('not verified')) {
+          setShowResendVerification(true);
+        }
+        
+        setError(errorMessage);
       } else {
         setError('Login failed');
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResendVerification = async () => {
+    if (!formData.email) {
+      setError('Please enter your email address first');
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      const result = await userAPI.resendVerification(formData.email);
+      setError(null);
+      alert(result.message || 'Verification email sent! Please check your inbox.');
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to resend verification email');
+      }
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const handleGoToVerification = () => {
+    if (!formData.email) {
+      setError('Please enter your email address first');
+      return;
+    }
+    onShowEmailVerification(formData.email);
   };
 
   return (
@@ -80,8 +123,27 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-600 text-white p-3 rounded mb-4 text-center">
-                {error}
+              <div className="bg-red-600/20 border border-red-500/30 rounded-lg p-3 text-center">
+                <p className="text-red-400 font-medium mb-2">{error}</p>
+                {showResendVerification && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleGoToVerification}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+                    >
+                      Go to Email Verification
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={resendLoading}
+                      className="w-full bg-slate-600 hover:bg-slate-700 disabled:opacity-50 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+                    >
+                      {resendLoading ? 'Sending...' : 'Resend Verification Email'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             
@@ -162,9 +224,10 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup }: LoginProps) => {
 
             <button
               type="submit"
-              className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+              disabled={loading}
+              className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
             >
-              Sign In
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 
