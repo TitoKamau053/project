@@ -58,6 +58,11 @@ function translateErrorMessage(serverMessage: string, statusCode: number): strin
     'Account suspended': 'Your account has been suspended. Please contact support.',
     'Invalid phone number': 'Please enter a valid phone number.',
     'Payment method not supported': 'This payment method is not currently supported.',
+    'Email not verified': 'Please verify your email address before signing in.',
+    'Verification token expired': 'Your verification link has expired. Please request a new one.',
+    'Invalid verification token': 'The verification link is invalid. Please request a new one.',
+    'Email already verified': 'Your email address is already verified.',
+    'Verification email sent': 'Verification email sent successfully.',
   };
 
   // Check if the server message matches any of our mapped errors
@@ -127,6 +132,22 @@ export const userAPI = {
 
   getProfile: async () => {
     return apiAuthFetch('/users/profile');
+  },
+
+  // Email Verification endpoints
+  verifyEmail: async (token: string) => {
+    return apiFetch(`/users/verify-email?token=${token}`);
+  },
+
+  resendVerification: async (email: string) => {
+    return apiFetch('/users/resend-verification', {
+      method: 'POST',
+      body: { email },
+    });
+  },
+
+  checkVerificationStatus: async (email: string) => {
+    return apiFetch(`/users/verification-status?email=${encodeURIComponent(email)}`);
   },
 };
 
