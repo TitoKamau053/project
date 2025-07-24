@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, ArrowLeft, Check } from 'lucide-react';
+import { userAPI } from '../utils/api';
+
+interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: string;
+  created_at: string;
+}
 
 interface SignupProps {
   onBack: () => void;
-  onSignup: () => void;
+  onSignup: (token: string, user: User) => void;
   onSwitchToLogin: () => void;
 }
 
@@ -20,24 +29,67 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
     referralCode: '',
     agreeToTerms: false
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle referral URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      setFormData(prev => ({ ...prev, referralCode: refCode }));
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
+    
     if (!formData.agreeToTerms) {
-      alert('Please agree to the terms and conditions');
+      setError('Please agree to the terms and conditions');
       return;
     }
-    // Simulate signup
-    onSignup();
+    
+    setLoading(true);
+    
+    try {
+      const data = await userAPI.register({
+        email: formData.email,
+        password: formData.password,
+        full_name: `${formData.firstName} ${formData.lastName}`,
+        phone: formData.phone,
+        referred_by: formData.referralCode || undefined
+      });
+      
+      if (data.token && data.user) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userJustLoggedIn', 'true'); // Set flag for countdown reset
+        onSignup(data.token, data.user);
+      } else {
+        // Registration successful but needs verification - redirect to login
+        setError('Registration successful! Please check your email to verify your account.');
+        setTimeout(() => {
+          onSwitchToLogin();
+        }, 2000);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Registration failed');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-slate-700">
         <button 
           onClick={onBack}
@@ -54,7 +106,6 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
         </div>
       </div>
 
-      {/* Signup Form */}
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="w-full max-w-md mx-auto">
           <div className="text-center mb-8">
@@ -63,6 +114,11 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-600 text-white p-3 rounded mb-4 text-center">
+                {error}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-slate-400 text-sm font-medium mb-2">
@@ -215,9 +271,10 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
 
             <button
               type="submit"
-              className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+              disabled={loading}
+              className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>
 
@@ -233,7 +290,6 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin }: SignupProps) => {
             </p>
           </div>
 
-          {/* Benefits */}
           <div className="mt-8 bg-slate-800 rounded-lg p-4">
             <h3 className="text-white font-semibold mb-3">Why Choose CryptoMine Pro?</h3>
             <div className="space-y-2">

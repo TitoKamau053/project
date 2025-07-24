@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Check } from 'lucide-react';
+import { depositAPI } from '../utils/api';
 
 interface DepositModalProps {
   onBack?: () => void;
@@ -11,22 +12,63 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
 
   const minAmount = 100;
   
-  const handleDeposit = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleDeposit = async () => {
+    setError(null);
+    setSuccessMessage(null);
+    
     if (!amount || parseFloat(amount) < minAmount) {
-      alert('Please enter a valid amount');
+      setError('Please enter a valid amount');
       return;
     }
+    
     if (!phoneNumber) {
-      alert('Please enter your phone number');
+      setError('Please enter your phone number');
       return;
     }
-    alert(`Deposit of KES ${amount} initiated to ${phoneNumber}`);
-    if (onBack) onBack();
+    
+    setLoading(true);
+    
+    try {
+      await depositAPI.initiate({
+        amount: parseFloat(amount),
+        phoneNumber: phoneNumber
+      });
+      
+      setSuccessMessage('Deposit initiated successfully. Please check your phone for M-Pesa prompt.');
+      setAmount('');
+      setPhoneNumber('');
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        if (onBack) onBack();
+      }, 2000);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to initiate deposit');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Amount Input */}
+      {error && (
+        <div className="bg-red-600 text-white p-3 rounded mb-4 text-center">
+          {error}
+        </div>
+      )}
+      {successMessage && (
+        <div className="bg-green-600 text-white p-3 rounded mb-4 text-center">
+          {successMessage}
+        </div>
+      )}
       <div>
         <label className="block text-slate-400 text-sm font-medium mb-2">
           Deposit Amount (KES)
@@ -43,7 +85,6 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
         </p>
       </div>
 
-      {/* Phone Number Input */}
       <div>
         <label className="block text-slate-400 text-sm font-medium mb-2">
           Phone Number
@@ -60,15 +101,14 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
         </p>
       </div>
 
-      {/* Deposit Button */}
       <button
         onClick={handleDeposit}
-        className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+        disabled={loading}
+        className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
       >
-        Confirm Deposit
+        {loading ? 'Initiating Deposit...' : 'Confirm Deposit'}
       </button>
 
-      {/* Security Notice */}
       <div className="bg-slate-800 rounded-lg p-4 border-l-4 border-green-500">
         <div className="flex items-start space-x-3">
           <Check className="w-5 h-5 text-green-500 mt-0.5" />

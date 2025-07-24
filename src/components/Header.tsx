@@ -1,13 +1,11 @@
-import { Bell, LogOut, User, History } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 
 interface HeaderProps {
   onLogout: () => void;
   onProfileClick?: () => void;
-  onTransactionsClick?: () => void;
-  onNotificationsClick?: () => void;
 }
 
-export const Header = ({ onLogout, onProfileClick, onTransactionsClick, onNotificationsClick }: HeaderProps) => {
+export const Header = ({ onLogout, onProfileClick }: HeaderProps) => {
   return (
     <header className="bg-slate-900 border-b border-slate-700 px-4 py-3">
       <div className="flex items-center justify-between">
@@ -21,25 +19,6 @@ export const Header = ({ onLogout, onProfileClick, onTransactionsClick, onNotifi
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          {onTransactionsClick && (
-            <button
-              onClick={onTransactionsClick}
-              className="text-slate-400 hover:text-white transition-colors"
-              title="Transaction History"
-            >
-              <History className="w-5 h-5" />
-            </button>
-          )}
-          {onNotificationsClick && (
-            <button
-              onClick={onNotificationsClick}
-              className="text-slate-400 hover:text-white transition-colors"
-              title="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-            </button>
-          )}
-          {!onNotificationsClick && <Bell className="w-5 h-5 text-slate-400" />}
           {onProfileClick && (
             <button
               onClick={onProfileClick}
