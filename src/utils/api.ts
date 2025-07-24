@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://cryptomineproapi.onrender.com/api';
+const API_BASE_URL = 'https://cryptomineproapi-production.up.railway.app/api';
 
 interface ApiOptions {
   method?: string;
