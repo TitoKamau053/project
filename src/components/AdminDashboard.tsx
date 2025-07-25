@@ -1366,8 +1366,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
             </div>
           ) : miningEngines.length === 0 ? (
             <div className="p-8 text-center">
-              <div className="text-slate-400">No mining engines found</div>
-              <p className="text-xs mt-2">Create mining engines for users to invest in</p>
+              <div className="text-slate-400">No mining engines available</div>
             </div>
           ) : (
             <div className="divide-y divide-slate-700">
@@ -1526,157 +1525,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
           </div>
         )}
 
-        {/* User Details Modal */}
-        {showUserModal && selectedUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-slate-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white text-xl font-bold">User Details</h3>
-                <button 
-                  onClick={() => {
-                    setShowUserModal(false);
-                    setSelectedUser(null);
-                    setUserDetails(null);
-                  }}
-                  className="text-slate-400 hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                {/* Basic Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Full Name</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.full_name}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Email</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.email}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Role</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.role}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Status</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.status || 'active'}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Current Balance</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">KES {(selectedUser.balance || 0).toLocaleString()}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Total Earnings</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">KES {(selectedUser.total_earnings || 0).toLocaleString()}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Referral Code</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.referral_code || 'Not set'}</div>
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Joined Date</label>
-                    <div className="text-white bg-slate-700 px-3 py-2 rounded">{new Date(selectedUser.created_at).toLocaleDateString()}</div>
-                  </div>
-                </div>
 
-                {/* Transaction History */}
-                {userDetails && (
-                  <div>
-                    <h4 className="text-white font-semibold mb-3">Transaction History</h4>
-                    <div className="space-y-3">
-                      {userDetails.deposits && userDetails.deposits.length > 0 && (
-                        <div>
-                          <h5 className="text-slate-300 text-sm font-medium mb-2">Recent Deposits ({userDetails.deposits.length})</h5>
-                          <div className="bg-slate-700 rounded p-3 max-h-32 overflow-y-auto">
-                            {userDetails.deposits.slice(0, 5).map((deposit: any, index: number) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span className="text-slate-300">KES {deposit.amount?.toLocaleString()}</span>
-                                <span className="text-slate-400">{new Date(deposit.created_at).toLocaleDateString()}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {userDetails.withdrawals && userDetails.withdrawals.length > 0 && (
-                        <div>
-                          <h5 className="text-slate-300 text-sm font-medium mb-2">Recent Withdrawals ({userDetails.withdrawals.length})</h5>
-                          <div className="bg-slate-700 rounded p-3 max-h-32 overflow-y-auto">
-                            {userDetails.withdrawals.slice(0, 5).map((withdrawal: any, index: number) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span className="text-slate-300">KES {withdrawal.amount?.toLocaleString()}</span>
-                                <span className="text-slate-400">{new Date(withdrawal.created_at).toLocaleDateString()}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {userDetails.purchases && userDetails.purchases.length > 0 && (
-                        <div>
-                          <h5 className="text-slate-300 text-sm font-medium mb-2">Mining Investments ({userDetails.purchases.length})</h5>
-                          <div className="bg-slate-700 rounded p-3 max-h-32 overflow-y-auto">
-                            {userDetails.purchases.slice(0, 5).map((purchase: any, index: number) => (
-                              <div key={index} className="flex justify-between text-sm">
-                                <span className="text-slate-300">KES {purchase.amount?.toLocaleString()}</span>
-                                <span className="text-slate-400">{new Date(purchase.created_at).toLocaleDateString()}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
-                  <button 
-                    onClick={() => handleBalanceAdjustment(selectedUser.id)}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
-                  >
-                    Adjust Balance
-                  </button>
-                  {selectedUser.status !== 'suspended' && (
-                    <button 
-                      onClick={() => {
-                        handleUserStatusUpdate(selectedUser.id, 'suspended');
-                        setShowUserModal(false);
-                      }}
-                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded transition-colors"
-                    >
-                      Suspend User
-                    </button>
-                  )}
-                  {selectedUser.status !== 'deactivated' && (
-                    <button 
-                      onClick={() => {
-                        handleUserStatusUpdate(selectedUser.id, 'deactivated');
-                        setShowUserModal(false);
-                      }}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors"
-                    >
-                      Deactivate User
-                    </button>
-                  )}
-                  {(selectedUser.status === 'suspended' || selectedUser.status === 'deactivated') && (
-                    <button 
-                      onClick={() => {
-                        handleUserStatusUpdate(selectedUser.id, 'active');
-                        setShowUserModal(false);
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
-                    >
-                      Activate User
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -2246,6 +2095,158 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
           {renderContent()}
         </main>
       </div>
+
+      {/* User Details Modal - Global Modal positioned at component root level */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white text-xl font-bold">User Details</h3>
+              <button 
+                onClick={() => {
+                  setShowUserModal(false);
+                  setSelectedUser(null);
+                  setUserDetails(null);
+                }}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Full Name</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.full_name}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Email</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.email}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Role</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.role}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Status</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.status || 'active'}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Current Balance</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">KES {(selectedUser.balance || 0).toLocaleString()}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Total Earnings</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">KES {(selectedUser.total_earnings || 0).toLocaleString()}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Referral Code</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">{selectedUser.referral_code || 'Not set'}</div>
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm font-medium mb-1">Joined Date</label>
+                  <div className="text-white bg-slate-700 px-3 py-2 rounded">{new Date(selectedUser.created_at).toLocaleDateString()}</div>
+                </div>
+              </div>
+
+              {/* Transaction History */}
+              {userDetails && (
+                <div>
+                  <h4 className="text-white font-semibold mb-3">Transaction History</h4>
+                  <div className="space-y-3">
+                    {userDetails.deposits && userDetails.deposits.length > 0 && (
+                      <div>
+                        <h5 className="text-slate-300 text-sm font-medium mb-2">Recent Deposits ({userDetails.deposits.length})</h5>
+                        <div className="bg-slate-700 rounded p-3 max-h-32 overflow-y-auto">
+                          {userDetails.deposits.slice(0, 5).map((deposit: any, index: number) => (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span className="text-slate-300">KES {deposit.amount?.toLocaleString()}</span>
+                              <span className="text-slate-400">{new Date(deposit.created_at).toLocaleDateString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {userDetails.withdrawals && userDetails.withdrawals.length > 0 && (
+                      <div>
+                        <h5 className="text-slate-300 text-sm font-medium mb-2">Recent Withdrawals ({userDetails.withdrawals.length})</h5>
+                        <div className="bg-slate-700 rounded p-3 max-h-32 overflow-y-auto">
+                          {userDetails.withdrawals.slice(0, 5).map((withdrawal: any, index: number) => (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span className="text-slate-300">KES {withdrawal.amount?.toLocaleString()}</span>
+                              <span className="text-slate-400">{new Date(withdrawal.created_at).toLocaleDateString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {userDetails.purchases && userDetails.purchases.length > 0 && (
+                      <div>
+                        <h5 className="text-slate-300 text-sm font-medium mb-2">Mining Investments ({userDetails.purchases.length})</h5>
+                        <div className="bg-slate-700 rounded p-3 max-h-32 overflow-y-auto">
+                          {userDetails.purchases.slice(0, 5).map((purchase: any, index: number) => (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span className="text-slate-300">KES {purchase.amount?.toLocaleString()}</span>
+                              <span className="text-slate-400">{new Date(purchase.created_at).toLocaleDateString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
+                <button 
+                  onClick={() => handleBalanceAdjustment(selectedUser.id)}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
+                >
+                  Adjust Balance
+                </button>
+                {selectedUser.status !== 'suspended' && (
+                  <button 
+                    onClick={() => {
+                      handleUserStatusUpdate(selectedUser.id, 'suspended');
+                      setShowUserModal(false);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    Suspend User
+                  </button>
+                )}
+                {selectedUser.status !== 'deactivated' && (
+                  <button 
+                    onClick={() => {
+                      handleUserStatusUpdate(selectedUser.id, 'deactivated');
+                      setShowUserModal(false);
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    Deactivate User
+                  </button>
+                )}
+                {(selectedUser.status === 'suspended' || selectedUser.status === 'deactivated') && (
+                  <button 
+                    onClick={() => {
+                      handleUserStatusUpdate(selectedUser.id, 'active');
+                      setShowUserModal(false);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    Activate User
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

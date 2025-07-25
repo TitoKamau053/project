@@ -24,7 +24,7 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | JSX.Element | null>(null);
   const [showResendVerification, setShowResendVerification] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
 
@@ -35,29 +35,46 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
     setShowResendVerification(false);
     
     try {
-      const data = await userAPI.login({
+      // Login with backend API
+      const response = await userAPI.login({
         email: formData.email,
         password: formData.password
       });
       
-      // Store token and user info
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userJustLoggedIn', 'true'); // Set flag for countdown reset
-      onLogin(data.token, data.user);
+      // Store token and user data
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('userJustLoggedIn', 'true');
+      
+      onLogin(response.token, response.user);
     } catch (err) {
       if (err instanceof Error) {
         const errorMessage = err.message;
         
-        // Check if this is an email verification error
-        if (errorMessage.includes('verify your email') || 
-            errorMessage.includes('email verification') ||
-            errorMessage.includes('not verified')) {
+        // Handle specific API errors
+        if (errorMessage.includes('Email not verified')) {
+          setError('Please verify your email before logging in.');
           setShowResendVerification(true);
+        } else if (errorMessage.includes('Invalid email or password')) {
+          setError('Invalid email or password.');
+        } else if (errorMessage.includes('Account is suspended')) {
+          setError('This account has been suspended.');
+        } else if (errorMessage.includes('User not found')) {
+          setError(
+            <div>
+              No account found with this email address.{' '}
+              <button 
+                onClick={onSwitchToSignup}
+                className="text-orange-500 hover:text-orange-400 underline"
+              >
+                Create an account
+              </button>
+            </div>
+          );
+        } else {
+          setError(errorMessage);
         }
-        
-        setError(errorMessage);
       } else {
-        setError('Login failed');
+        setError('Login failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -65,21 +82,35 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
   };
 
   const handleResendVerification = async () => {
-    if (!formData.email) {
-      setError('Please enter your email address first');
-      return;
-    }
-
     setResendLoading(true);
+    setError(null);
+    
     try {
-      const result = await userAPI.resendVerification(formData.email);
+      const response = await userAPI.resendVerification(formData.email);
+      
+      // Check if user is already verified
+      if (response.already_verified) {
+        setError(null);
+        alert('Your email is already verified! You can now log in.');
+        // Clear the resend verification option since user is verified
+        setShowResendVerification(false);
+        return;
+      }
+      
       setError(null);
-      alert(result.message || 'Verification email sent! Please check your inbox.');
+      alert('Verification email sent! Please check your inbox.');
+      onShowEmailVerification(formData.email);
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        if (err.message.includes('already verified')) {
+          setError(null);
+          alert('Your email is already verified! You can now log in.');
+          setShowResendVerification(false);
+        } else {
+          setError(`Failed to send verification email: ${err.message}`);
+        }
       } else {
-        setError('Failed to resend verification email');
+        setError('Failed to send verification email.');
       }
     } finally {
       setResendLoading(false);
@@ -105,25 +136,26 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-sm">C</span>
-          </div>
-          <span className="text-orange-500 font-bold text-lg">CryptoMine Pro</span>
-        </div>
+        <h1 className="text-white font-bold text-lg">Sign In</h1>
+        <div></div>
       </div>
 
-      {/* Login Form */}
+      {/* Content */}
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-white text-2xl font-bold mb-2">Welcome Back</h1>
+        <div className="w-full max-w-md space-y-6">
+          {/* Logo */}
+          <div className="text-center">
+            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-white font-bold text-2xl">C</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
             <p className="text-slate-400">Sign in to your CryptoMine Pro account</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error Message */}
             {error && (
-              <div className="bg-red-600/20 border border-red-500/30 rounded-lg p-3 text-center">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
                 <p className="text-red-400 font-medium mb-2">{error}</p>
                 {showResendVerification && (
                   <div className="space-y-2">
@@ -146,28 +178,6 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
                 )}
               </div>
             )}
-            
-            {/* Admin Testing Info */}
-            <div className="bg-blue-600/20 border border-blue-500/30 rounded-lg p-3 text-center">
-              <p className="text-blue-400 text-sm font-medium mb-2">👑 Admin Testing Credentials</p>
-              <div className="flex items-center justify-between text-xs">
-                <div>
-                  <p className="text-blue-300">Email: admin@cryptominepro.com</p>
-                  <p className="text-blue-300">Password: Admin@123</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ 
-                    email: 'admin@cryptominepro.com', 
-                    password: 'Admin@123' 
-                  })}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                >
-                  Quick Fill
-                </button>
-              </div>
-              <p className="text-slate-400 text-xs mt-1">Use these credentials to access the admin dashboard</p>
-            </div>
 
             <div>
               <label className="block text-slate-400 text-sm font-medium mb-2">
@@ -192,7 +202,7 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 pr-12 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors pr-12"
                   placeholder="Enter your password"
                   required
                 />
@@ -204,22 +214,6 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-orange-500 bg-slate-800 border-slate-700 rounded focus:ring-orange-500 focus:ring-2"
-                />
-                <span className="ml-2 text-slate-400 text-sm">Remember me</span>
-              </label>
-              <button
-                type="button"
-                className="text-orange-500 text-sm hover:text-orange-400 transition-colors"
-              >
-                Forgot password?
-              </button>
             </div>
 
             <button

@@ -61,38 +61,37 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
     setLoading(true);
     
     try {
-      const data = await userAPI.register({
+      // Register with backend API
+      const response = await userAPI.register({
         email: formData.email,
         password: formData.password,
         full_name: `${formData.firstName} ${formData.lastName}`,
-        phone: formData.phone,
-        referred_by: formData.referralCode || undefined
+        phone: formData.phone || undefined,
+        referral_code: formData.referralCode || undefined,
       });
       
-      // Check if registration returns a token (direct login) or requires email verification
-      if (data.token && data.user) {
-        // Direct login - user is already verified or verification is disabled
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userJustLoggedIn', 'true');
-        onSignup(data.token, data.user);
-      } else if (data.user && data.message && data.emailSent) {
-        // Email verification required - show verification screen
-        setMessage(data.message);
-        setTimeout(() => {
-          onShowEmailVerification(formData.email);
-        }, 2000);
-      } else {
-        // Fallback - show success message and redirect to login
-        setMessage('Registration successful! Please check your email to verify your account.');
-        setTimeout(() => {
-          onSwitchToLogin();
-        }, 2000);
-      }
+      setMessage(response.message || 'Registration successful! Please check your email to verify your account.');
+      
+      // Show verification screen after a short delay
+      setTimeout(() => {
+        onShowEmailVerification(formData.email);
+      }, 2000);
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message);
+        const errorMessage = err.message;
+        
+        // Handle API-specific errors
+        if (errorMessage.includes('already exists')) {
+          setError('An account with this email already exists.');
+        } else if (errorMessage.includes('password')) {
+          setError('Password should be at least 6 characters.');
+        } else if (errorMessage.includes('email')) {
+          setError('Please enter a valid email address.');
+        } else {
+          setError(errorMessage);
+        }
       } else {
-        setError('Registration failed');
+        setError('Registration failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -146,7 +145,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                  placeholder="John"
+                  placeholder="First name"
                   required
                 />
               </div>
@@ -159,7 +158,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                  placeholder="Doe"
+                  placeholder="Last name"
                   required
                 />
               </div>
@@ -174,7 +173,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                placeholder="john@example.com"
+                placeholder="your.email@example.com"
                 required
               />
             </div>
@@ -188,7 +187,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                placeholder="+254 700 000 000"
+                placeholder="Enter your phone number"
                 required
               />
             </div>

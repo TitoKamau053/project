@@ -9,10 +9,11 @@ import { Header } from './components/Header';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
 import { EmailVerification } from './components/EmailVerification';
+import { EmailVerifyPage } from './components/EmailVerifyPage';
 import { Profile } from './components/Profile';
 import { Support } from './components/Support';
 import { AdminDashboard } from './components/AdminDashboard';
-import { getAuthToken } from './utils/api';
+import { userAPI } from './utils/api';
 import { setScrollFlag } from './utils/scrollUtils';
 
 interface User {
@@ -23,39 +24,53 @@ interface User {
   created_at: string;
 }
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification'>('login');
+  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification' | 'email-verify-page'>('login');
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [verificationEmail, setVerificationEmail] = useState<string>('');
+  const [verificationToken, setVerificationToken] = useState<string>('');
 
-  // Check authentication on app load
+  // Check for email verification token in URL
   useEffect(() => {
-    const checkAuth = () => {
-      const token = getAuthToken();
-      const userData = localStorage.getItem('user');
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    
+    if (token) {
+      setVerificationToken(token);
+      setCurrentView('email-verify-page');
+      // Clear the URL parameters to avoid reprocessing
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+  }, []);
+
+  // Check authentication status when component mounts
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
       
-      if (token && userData) {
+      if (token && storedUser) {
         try {
-          const parsedUser = JSON.parse(userData);
-          // Ensure created_at exists
-          if (!parsedUser.created_at) {
-            parsedUser.created_at = new Date().toISOString();
-            localStorage.setItem('user', JSON.stringify(parsedUser));
-          }
-          setUser(parsedUser);
+          // Verify token is still valid by making a request to get profile
+          const response = await userAPI.getProfile();
+          const userData = response.user;
+          
+          setUser(userData);
           setIsAuthenticated(true);
           
-          // Redirect based on user role - ensure admin goes to admin dashboard
-          if (parsedUser.role === 'admin') {
+          // Redirect based on user role
+          if (userData.role === 'admin') {
             setCurrentView('admin');
           } else {
             setCurrentView('app');
           }
-        } catch {
-          // Invalid user data, clear storage and redirect to login
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          // Clear invalid token and user data
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setCurrentView('login');
@@ -63,7 +78,7 @@ function App() {
           setUser(null);
         }
       } else {
-        // No authentication found, ensure login view
+        // No stored authentication
         setCurrentView('login');
         setIsAuthenticated(false);
         setUser(null);
@@ -74,7 +89,7 @@ function App() {
     checkAuth();
   }, []);
 
-    const handleLogin = (_token: string, userData: User) => {
+  const handleLogin = (_token: string, userData: User) => {
     // Ensure created_at field exists, provide default if missing
     const userWithCreatedAt = {
       ...userData,
@@ -106,13 +121,25 @@ function App() {
     setCurrentView('app');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    setIsAuthenticated(false);
-    setCurrentView('login');
-    setActiveTab('dashboard');
+  const handleLogout = async () => {
+    try {
+      // Clear authentication data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
+      setCurrentView('login');
+      setActiveTab('dashboard');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if there's an error
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsAuthenticated(false);
+      setCurrentView('login');
+      setActiveTab('dashboard');
+    }
   };
 
   const handleShowEmailVerification = (email: string) => {
@@ -147,6 +174,16 @@ function App() {
 
   // Handle unauthenticated views (login and signup)
   if (!isAuthenticated || !user) {
+    if (currentView === 'email-verify-page') {
+      return (
+        <EmailVerifyPage
+          token={verificationToken}
+          onBack={() => setCurrentView('login')}
+          onVerificationComplete={handleVerificationComplete}
+        />
+      );
+    }
+
     if (currentView === 'signup') {
       return (
         <Signup
@@ -264,6 +301,10 @@ function App() {
       onShowEmailVerification={handleShowEmailVerification}
     />
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;

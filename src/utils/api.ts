@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://cryptomineproapi-production.up.railway.app/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 interface ApiOptions {
   method?: string;
@@ -11,8 +11,11 @@ export async function apiFetch(endpoint: string, options: ApiOptions = {}) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  
+  // Get token from localStorage if not provided
+  const authToken = token || localStorage.getItem('token');
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -59,10 +62,16 @@ function translateErrorMessage(serverMessage: string, statusCode: number): strin
     'Invalid phone number': 'Please enter a valid phone number.',
     'Payment method not supported': 'This payment method is not currently supported.',
     'Email not verified': 'Please verify your email address before signing in.',
+    'verify your email': 'Please verify your email address before signing in.',
+    'email verification': 'Please verify your email address before signing in.',
+    'not verified': 'Please verify your email address before signing in.',
     'Verification token expired': 'Your verification link has expired. Please request a new one.',
     'Invalid verification token': 'The verification link is invalid. Please request a new one.',
+    'Invalid or expired token': 'Your verification link has expired. Please request a new one.',
     'Email already verified': 'Your email address is already verified.',
     'Verification email sent': 'Verification email sent successfully.',
+    'Token not found': 'Invalid verification link. Please request a new one.',
+    'Token expired': 'Your verification link has expired. Please request a new one.',
   };
 
   // Check if the server message matches any of our mapped errors
@@ -105,9 +114,6 @@ export async function apiAuthFetch(endpoint: string, options: Omit<ApiOptions, '
   const token = getAuthToken();
   return apiFetch(endpoint, { ...options, token });
 }
-
-// API Service Functions
-
 // User Management
 export const userAPI = {
   register: async (userData: {
@@ -115,7 +121,7 @@ export const userAPI = {
     password: string;
     full_name: string;
     phone?: string;
-    referred_by?: string;
+    referral_code?: string;
   }) => {
     return apiFetch('/users/register', {
       method: 'POST',
@@ -148,6 +154,17 @@ export const userAPI = {
 
   checkVerificationStatus: async (email: string) => {
     return apiFetch(`/users/verification-status?email=${encodeURIComponent(email)}`);
+  },
+
+  // Additional method that returns just the status without making network request
+  // This is for compatibility with existing components
+  getVerificationStatusFromResponse: (response: { success?: boolean; data?: { is_verified: boolean }; verified?: boolean }): { verified: boolean } => {
+    // Handle both old and new response formats
+    if (response.success && response.data) {
+      return { verified: response.data.is_verified };
+    }
+    // Fallback for old format
+    return { verified: response.verified || false };
   },
 };
 
