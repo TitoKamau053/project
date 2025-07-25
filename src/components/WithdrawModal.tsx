@@ -117,7 +117,7 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-          placeholder="254700000000"
+          placeholder="Enter your M-Pesa number"
         />
         <p className="text-slate-500 text-sm mt-1">
           Enter your {selectedNetwork === 'mpesa' ? 'M-Pesa' : 'Airtel Money'} registered phone number

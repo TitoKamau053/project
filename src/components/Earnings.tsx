@@ -80,7 +80,6 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
           }
         } catch {
           // If success stories API fails, keep default stories
-          console.log('No success stories API available, using default stories');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load earnings data');
