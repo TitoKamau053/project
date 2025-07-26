@@ -21,7 +21,7 @@ export const Notifications = ({ onBack }: NotificationsProps) => {
       id: 'N001',
       type: 'deposit',
       title: 'Deposit Successful',
-      message: 'Your deposit of KES 5,000 via M-Pesa has been processed successfully.',
+      message: 'Deposit received successfully. Your balance has been updated accordingly.',
       time: '2 hours ago',
       read: false,
       important: false
@@ -66,7 +66,7 @@ export const Notifications = ({ onBack }: NotificationsProps) => {
       id: 'N006',
       type: 'withdrawal',
       title: 'Withdrawal Processed',
-      message: 'Your withdrawal of KES 2,000 has been sent to your M-Pesa account.',
+      message: 'Your withdrawal request has been received. It is currently being processed and will reflect shortly.',
       time: '5 days ago',
       read: true,
       important: false

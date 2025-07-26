@@ -123,13 +123,19 @@ export const userAPI = {
     phone?: string;
     referral_code?: string;
   }) => {
+    // Use the app base URL for verification instead of external URL
+    const verificationUrl = `${import.meta.env.VITE_APP_BASE_URL || 'http://localhost:5173'}/?token=`;
+    
     return apiFetch('/users/register', {
       method: 'POST',
-      body: userData,
+      body: {
+        ...userData,
+        verification_url: verificationUrl
+      },
     });
   },
 
-  login: async (credentials: { email: string; password: string }) => {
+  login: async (credentials: { phone?: string; email?: string; password: string }) => {
     return apiFetch('/users/login', {
       method: 'POST',
       body: credentials,
@@ -145,10 +151,39 @@ export const userAPI = {
     return apiFetch(`/users/verify-email?token=${token}`);
   },
 
+  // Legacy verification endpoint for old backend URLs
+  verifyEmailLegacy: async (email: string) => {
+    return apiFetch(`/users/verification-status?email=${encodeURIComponent(email)}`, {
+      method: 'GET'
+    }).then(() => {
+      // If the API call succeeds, we assume verification was successful
+      return { message: 'Email verified successfully' };
+    });
+  },
+
   resendVerification: async (email: string) => {
+    // Use the app base URL for verification instead of external URL
+    const verificationUrl = `${import.meta.env.VITE_APP_BASE_URL || 'http://localhost:5173'}/?token=`;
+    
     return apiFetch('/users/resend-verification', {
       method: 'POST',
-      body: { email },
+      body: { 
+        email,
+        verification_url: verificationUrl 
+      },
+    });
+  },
+
+  resendVerificationByPhone: async (phone: string) => {
+    // Use the app base URL for verification instead of external URL
+    const verificationUrl = `${import.meta.env.VITE_APP_BASE_URL || 'http://localhost:5173'}/?token=`;
+    
+    return apiFetch('/users/resend-verification-by-phone', {
+      method: 'POST',
+      body: { 
+        phone,
+        verification_url: verificationUrl 
+      },
     });
   },
 
@@ -245,6 +280,21 @@ export const referralAPI = {
   generateReferralLink: async () => {
     return apiAuthFetch('/referrals/generate');
   },
+
+  // Validate referral code (public endpoint - no auth required)
+  validateReferralCode: async (code: string) => {
+    return apiFetch(`/referrals/validate/${code}`);
+  },
+
+  // Get commission history
+  getCommissions: async (page: number = 1, limit: number = 10) => {
+    return apiAuthFetch(`/referrals/commissions?page=${page}&limit=${limit}`);
+  },
+
+  // Get referrer information
+  getMyReferrer: async () => {
+    return apiAuthFetch('/referrals/my-referrer');
+  },
 };
 
 // Transactions & Activities
@@ -253,8 +303,26 @@ export const transactionAPI = {
     return apiAuthFetch('/transactions/recent');
   },
 
-  getUserTransactions: async () => {
-    return apiAuthFetch('/transactions');
+  getUserTransactions: async (filters?: { type?: string; period?: string; status?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.type && filters.type !== 'all') params.append('type', filters.type);
+    if (filters?.period && filters.period !== 'all') params.append('period', filters.period);
+    if (filters?.status && filters.status !== 'all') params.append('status', filters.status);
+    
+    const queryString = params.toString();
+    return apiAuthFetch(`/transactions${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getUserDeposits: async () => {
+    return apiAuthFetch('/transactions/deposits');
+  },
+
+  getUserWithdrawals: async () => {
+    return apiAuthFetch('/transactions/withdrawals');
+  },
+
+  getUserEarnings: async () => {
+    return apiAuthFetch('/transactions/earnings');
   },
 };
 

@@ -8,13 +8,54 @@ interface DepositModalProps {
 
 export const DepositModal = ({ onBack }: DepositModalProps) => {
   const [amount, setAmount] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(() => {
+    // Auto-fill phone number from localStorage
+    return localStorage.getItem('userPhoneNumber') || '';
+  });
 
   const minAmount = 100;
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string): { isValid: boolean; message?: string } => {
+    // Remove all non-digit characters
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Check if it matches Kenyan format (254XXXXXXX - should be 12 digits total)
+    if (cleanPhone.length === 12 && cleanPhone.startsWith('254')) {
+      return { isValid: true };
+    }
+    
+    // Check if it matches local format (07XXXXXXX, 01XXXXXXX - should be 10 digits)
+    if (cleanPhone.length === 10 && (cleanPhone.startsWith('07') || cleanPhone.startsWith('01'))) {
+      return { isValid: true };
+    }
+    
+    return { 
+      isValid: false, 
+      message: 'Please enter a valid phone number. Format: 254788888888 or 0788888888' 
+    };
+  };
+
+  // Format phone number for API (ensure it's in 254XXXXXXX format)
+  const formatPhoneNumber = (phone: string): string => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // If it's already in international format (254XXXXXXX)
+    if (cleanPhone.startsWith('254')) {
+      return cleanPhone;
+    }
+    
+    // If it's in local format (07XXXXXXX, 01XXXXXXX), convert to international
+    if (cleanPhone.startsWith('0')) {
+      return '254' + cleanPhone.substring(1);
+    }
+    
+    return cleanPhone;
+  };
 
   const handleDeposit = async () => {
     setError(null);
@@ -29,16 +70,26 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
       setError('Please enter your phone number');
       return;
     }
+
+    // Validate phone number
+    const phoneValidation = validatePhoneNumber(phoneNumber);
+    if (!phoneValidation.isValid) {
+      setError(phoneValidation.message || 'Invalid phone number format');
+      return;
+    }
     
     setLoading(true);
     
     try {
+      // Format phone number for API
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      
       await depositAPI.initiate({
         amount: parseFloat(amount),
-        phoneNumber: phoneNumber
+        phoneNumber: formattedPhone
       });
       
-      setSuccessMessage('Deposit initiated successfully. Please check your phone for M-Pesa prompt.');
+      setSuccessMessage('Deposit received successfully. Your balance has been updated accordingly.');
       setAmount('');
       setPhoneNumber('');
       
@@ -94,10 +145,10 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-          placeholder="Enter your M-Pesa number"
+          placeholder="254788888888 or 0788888888"
         />
         <p className="text-slate-500 text-sm mt-1">
-          Enter your M-Pesa registered phone number
+          Enter your M-Pesa registered phone number (Format: 254788888888 or 0788888888)
         </p>
       </div>
 

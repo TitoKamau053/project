@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, DollarSign } from 'lucide-react';
 import { purchaseAPI, earningsAPI } from '../utils/api';
+import { Logo } from './Logo';
 
 export const MiningNow = () => {
   const [activeTab, setActiveTab] = useState('active');
@@ -54,9 +55,7 @@ export const MiningNow = () => {
           {/* Available Rewards */}
           <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
             <div className="flex items-center space-x-3 mb-3">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-white" />
-              </div>
+              <Logo size="sm" />
               <div>
                 <p className="text-slate-400 text-sm">Available Mining Rewards</p>
                 <p className="text-green-500 text-lg font-bold">KES 0.00</p>
@@ -72,7 +71,7 @@ export const MiningNow = () => {
             <div className="bg-slate-800 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">
                 <DollarSign className="w-5 h-5 text-green-500" />
-                <span className="text-slate-400 text-sm">Total Invested</span>
+                <span className="text-slate-400 text-sm">Total Stake</span>
               </div>
               <p className="text-white text-lg font-bold">
                 KES {activePurchases.reduce((sum, p) => sum + parseFloat(p.amount_invested), 0).toFixed(2)}

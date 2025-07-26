@@ -63,7 +63,7 @@ export const Support = ({ onBack }: SupportProps) => {
       id: 'whatsapp',
       name: 'WhatsApp',
       icon: MessageCircle,
-      contact: '+254 700 000 000',
+      contact: '+254 703 819 807',
       availability: '24/7',
       responseTime: 'Within 5 minutes',
       color: 'bg-green-600'
@@ -72,7 +72,7 @@ export const Support = ({ onBack }: SupportProps) => {
       id: 'telegram',
       name: 'Telegram',
       icon: MessageCircle,
-      contact: '@cryptominepro',
+      contact: '@cryptomine_pro',
       availability: '24/7',
       responseTime: 'Within 10 minutes',
       color: 'bg-blue-600'
@@ -81,7 +81,7 @@ export const Support = ({ onBack }: SupportProps) => {
       id: 'phone',
       name: 'Phone Support',
       icon: Phone,
-      contact: '+254 700 000 000',
+      contact: '+254 703 819 807',
       availability: '9 AM - 6 PM',
       responseTime: 'Immediate',
       color: 'bg-orange-600'

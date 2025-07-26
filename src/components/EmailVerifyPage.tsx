@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, Mail, ArrowLeft } from 'lucide-react';
+import { CheckCircle, AlertCircle, Mail, ArrowLeft, RefreshCw, Send } from 'lucide-react';
 import { userAPI } from '../utils/api';
 
 interface EmailVerifyPageProps {
@@ -11,7 +11,10 @@ interface EmailVerifyPageProps {
 export const EmailVerifyPage = ({ token, onBack, onVerificationComplete }: EmailVerifyPageProps) => {
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [message, setMessage] = useState('');
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(5);
+  const [canRetry, setCanRetry] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
     if (token) {
@@ -19,10 +22,11 @@ export const EmailVerifyPage = ({ token, onBack, onVerificationComplete }: Email
     } else {
       setStatus('error');
       setMessage('No verification token provided. Please use the complete link from your email.');
+      setCanRetry(false);
     }
   }, [token]);
 
-  // Countdown for redirect after successful verification
+  // Auto-redirect countdown after successful verification
   useEffect(() => {
     if (status === 'success' && countdown > 0) {
       const timer = setTimeout(() => {
@@ -37,25 +41,98 @@ export const EmailVerifyPage = ({ token, onBack, onVerificationComplete }: Email
   const verifyEmail = async (verificationToken: string) => {
     try {
       setStatus('verifying');
+      
+      // Handle backend redirect success format
+      if (verificationToken === 'backend-success') {
+        setStatus('success');
+        setMessage('Your email has been verified successfully! You can now access all features.');
+        setCanRetry(false);
+        return;
+      }
+      
+      // Handle already verified case from backend redirect
+      if (verificationToken === 'already-verified') {
+        setStatus('success');
+        setMessage('Your email is already verified! You can now access all features.');
+        setCanRetry(false);
+        return;
+      }
+      
+      // Handle various verification errors from backend redirect
+      if (verificationToken.startsWith('verification-error-')) {
+        const errorType = verificationToken.replace('verification-error-', '');
+        setStatus('error');
+        setCanRetry(true);
+        
+        switch (errorType) {
+          case 'missing_token':
+            setMessage('The verification link is incomplete. Please use the complete link from your email.');
+            break;
+          case 'invalid_token':
+            setMessage('This verification link has expired or is invalid. Please request a new verification email.');
+            break;
+          case 'server_error':
+            setMessage('A server error occurred during verification. Please try again or contact support.');
+            break;
+          default:
+            setMessage('Verification failed due to an unknown error. Please try again or contact support.');
+        }
+        return;
+      }
+      
+      // Handle legacy verification format (from old backend URLs)
+      if (verificationToken === 'legacy-verification') {
+        setStatus('success');
+        setMessage('Your email has been verified successfully! You can now access all features.');
+        setCanRetry(false);
+        return;
+      }
+      
+      // Handle new token-based verification (direct API call)
       const response = await userAPI.verifyEmail(verificationToken);
       
-      setStatus('success');
-      setMessage(response.message || 'Email verified successfully!');
+      if (response.success) {
+        setStatus('success');
+        setMessage(response.message || 'Your email has been verified successfully! You can now access all features.');
+        
+        // Extract user email from response if available
+        if (response.data?.email) {
+          setUserEmail(response.data.email);
+        }
+      } else {
+        throw new Error(response.message || 'Verification failed');
+      }
+      
+      setCanRetry(false);
       
     } catch (error) {
       setStatus('error');
+      setCanRetry(true);
       if (error instanceof Error) {
         // Handle specific error cases
         if (error.message.includes('Invalid or expired')) {
           setMessage('This verification link has expired or is invalid. Please request a new verification email.');
         } else if (error.message.includes('already verified')) {
-          setMessage('Your email is already verified! You can now log in to your account.');
+          setStatus('success');
+          setMessage('Your email is already verified! You can now access all features.');
+          setCanRetry(false);
         } else {
           setMessage(error.message || 'Verification failed. Please try again.');
         }
       } else {
         setMessage('Verification failed. Please try again.');
       }
+    }
+  };
+
+  const handleRetryVerification = async () => {
+    if (!token || !canRetry) return;
+    
+    setIsRetrying(true);
+    try {
+      await verifyEmail(token);
+    } finally {
+      setIsRetrying(false);
     }
   };
 
@@ -105,9 +182,9 @@ export const EmailVerifyPage = ({ token, onBack, onVerificationComplete }: Email
                 <CheckCircle className="w-10 h-10 text-green-500" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">✅ Email Verified Successfully!</h2>
-              <p className="text-green-400 mb-4">{message}</p>
+              <p className="text-green-400 mb-4">Your email has been verified successfully! You can now go back to login.</p>
               <p className="text-slate-400">
-                You can now access all features of your CryptoMinePro account.
+                Your email verification is complete and you now have full access to your CryptoMine Pro account.
               </p>
               
               <div className="mt-6 bg-green-500/10 border border-green-500/20 rounded-lg p-4">
@@ -134,10 +211,30 @@ export const EmailVerifyPage = ({ token, onBack, onVerificationComplete }: Email
               <p className="text-red-400 mb-4">{message}</p>
               
               <div className="space-y-3">
+                {canRetry && (
+                  <button
+                    onClick={handleRetryVerification}
+                    disabled={isRetrying}
+                    className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+                  >
+                    {isRetrying ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        <span>Retrying...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-5 h-5" />
+                        <span>Retry Verification</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                
                 {message.includes('expired') || message.includes('invalid') ? (
                   <button
                     onClick={handleRequestNewLink}
-                    className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+                    className="w-full bg-slate-700 text-white py-3 rounded-lg font-semibold hover:bg-slate-600 transition-colors"
                   >
                     Request New Verification Email
                   </button>
@@ -150,12 +247,6 @@ export const EmailVerifyPage = ({ token, onBack, onVerificationComplete }: Email
                   </button>
                 ) : (
                   <div className="space-y-2">
-                    <button
-                      onClick={() => token && verifyEmail(token)}
-                      className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
-                    >
-                      Try Again
-                    </button>
                     <button
                       onClick={handleRequestNewLink}
                       className="w-full bg-slate-700 text-white py-3 rounded-lg font-semibold hover:bg-slate-600 transition-colors"

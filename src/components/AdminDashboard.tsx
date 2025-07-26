@@ -17,6 +17,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { apiAuthFetch } from '../utils/api';
+import { Logo } from './Logo';
 
 interface User {
   id: number;

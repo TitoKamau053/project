@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, ArrowUp, Users, Zap, TrendingUp, X } from 'lucide-react';
+import { Plus, ArrowUp, Users, Zap, TrendingUp, X, CreditCard, Pickaxe, HelpCircle, Info } from 'lucide-react';
 import TradingViewWidget from './TradingViewWidget';
 import { LivePrices } from './LivePrices';
 import { DepositModal } from './DepositModal';
@@ -19,9 +19,13 @@ interface Activity {
 
 interface DashboardProps {
   onActivateMine?: () => void;
+  onShowTransactions?: () => void;
+  onShowMiningPackages?: () => void;
+  onShowHelpline?: () => void;
+  onShowAbout?: () => void;
 }
 
-export const Dashboard = ({ onActivateMine }: DashboardProps) => {
+export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPackages, onShowHelpline, onShowAbout }: DashboardProps) => {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
@@ -31,24 +35,24 @@ export const Dashboard = ({ onActivateMine }: DashboardProps) => {
   const [error, setError] = useState<string | null>(null);
   const [simulatedVolume, setSimulatedVolume] = useState(30.88);
 
-  // Kenyan context simulated activities - at least 15 activities
+  // Kenyan context simulated activities - updated with success stories data and big money values
   const simulatedActivities: Activity[] = [
-    { name: 'Brian K.', avatar: 'B', action: 'activated CryptoMine Pro', amount: '+KES 15,420', time: '2 mins ago', crypto: 'BTC', color: 'bg-green-600' },
-    { name: 'Sarah M.', avatar: 'S', action: 'completed Daily Mine', amount: '+KES 8,750', time: '3 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
-    { name: 'John K.', avatar: 'J', action: 'withdrew to M-Pesa', amount: '-KES 12,000', time: '5 mins ago', crypto: 'USDT', color: 'bg-orange-600' },
-    { name: 'Grace W.', avatar: 'G', action: 'started Triple Mine', amount: '+KES 22,150', time: '7 mins ago', crypto: 'BTC', color: 'bg-purple-600' },
-    { name: 'David O.', avatar: 'D', action: 'deposited via M-Pesa', amount: '+KES 5,000', time: '8 mins ago', crypto: 'ETH', color: 'bg-teal-600' },
-    { name: 'Mary N.', avatar: 'M', action: 'earned referral bonus', amount: '+KES 3,250', time: '10 mins ago', crypto: 'LTC', color: 'bg-indigo-600' },
-    { name: 'Peter K.', avatar: 'P', action: 'activated Crypto Blast', amount: '+KES 18,900', time: '12 mins ago', crypto: 'BTC', color: 'bg-green-600' },
-    { name: 'Agnes M.', avatar: 'A', action: 'completed mining cycle', amount: '+KES 9,430', time: '15 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
-    { name: 'Joseph L.', avatar: 'J', action: 'deposited KES 10K', amount: '+KES 10,000', time: '18 mins ago', crypto: 'USDT', color: 'bg-yellow-600' },
-    { name: 'Ruth K.', avatar: 'R', action: 'withdrew earnings', amount: '-KES 7,500', time: '20 mins ago', crypto: 'BTC', color: 'bg-orange-600' },
-    { name: 'Samuel N.', avatar: 'S', action: 'joined via referral', amount: '+KES 1,000', time: '22 mins ago', crypto: 'ETH', color: 'bg-purple-600' },
-    { name: 'Catherine W.', avatar: 'C', action: 'activated Pro Miner', amount: '+KES 25,750', time: '25 mins ago', crypto: 'BTC', color: 'bg-green-600' },
-    { name: 'Michael O.', avatar: 'M', action: 'completed staking', amount: '+KES 14,200', time: '28 mins ago', crypto: 'LTC', color: 'bg-indigo-600' },
-    { name: 'Faith M.', avatar: 'F', action: 'deposited via Bank', amount: '+KES 20,000', time: '30 mins ago', crypto: 'USDT', color: 'bg-teal-600' },
-    { name: 'Daniel K.', avatar: 'D', action: 'earned mining reward', amount: '+KES 11,650', time: '32 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
-    { name: 'Joyce N.', avatar: 'J', action: 'activated Hourly Mine', amount: '+KES 6,800', time: '35 mins ago', crypto: 'BTC', color: 'bg-green-600' }
+    { name: 'Grace N.', avatar: 'G', action: 'earned daily profit', amount: '+KES 87,300', time: '2 mins ago', crypto: 'BTC', color: 'bg-green-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'completed smart mining', amount: '+KES 89,100', time: '3 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'withdrew to M-Pesa', amount: '+KES 15,000', time: '5 mins ago', crypto: 'USDT', color: 'bg-orange-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'earned daily reward', amount: '+KES 30,000', time: '7 mins ago', crypto: 'BTC', color: 'bg-purple-600' },
+    { name: 'Grace N.', avatar: 'G', action: 'deposited via M-Pesa', amount: '+KES 20,000', time: '8 mins ago', crypto: 'ETH', color: 'bg-teal-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'earned 5x capital', amount: '+KES 89,100', time: '10 mins ago', crypto: 'LTC', color: 'bg-indigo-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'activated automated earnings', amount: '+KES 26,900', time: '12 mins ago', crypto: 'BTC', color: 'bg-green-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'completed mining cycle', amount: '+KES 12,700', time: '15 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
+    { name: 'Grace N.', avatar: 'G', action: 'silent partner earnings', amount: '+KES 70,300', time: '18 mins ago', crypto: 'USDT', color: 'bg-yellow-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'smart income generated', amount: '+KES 59,100', time: '20 mins ago', crypto: 'BTC', color: 'bg-orange-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'morning withdrawal', amount: '+KES 65,000', time: '22 mins ago', crypto: 'ETH', color: 'bg-purple-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'daily earnings', amount: '+KES 84,000', time: '25 mins ago', crypto: 'BTC', color: 'bg-green-600' },
+    { name: 'Grace N.', avatar: 'G', action: 'passive income', amount: '+KES 54,200', time: '28 mins ago', crypto: 'LTC', color: 'bg-indigo-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'capital multiplied', amount: '+KES 89,100', time: '30 mins ago', crypto: 'USDT', color: 'bg-teal-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'automated profit', amount: '+KES 63,900', time: '32 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'salary replacement', amount: '+KES 39,000', time: '35 mins ago', crypto: 'BTC', color: 'bg-green-600' }
   ];
 
   // Get activities to display (simulated activities for better UX)
@@ -239,6 +243,41 @@ export const Dashboard = ({ onActivateMine }: DashboardProps) => {
             <span className="text-slate-400 text-sm">Active Miners</span>
           </div>
           <p className="text-white text-lg font-bold">{activeMiners}</p>
+        </div>
+      </div>
+
+      {/* Dashboard Action Buttons */}
+      <div className="bg-slate-800 rounded-lg p-4">
+        <h3 className="text-white font-semibold mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <button 
+            onClick={onShowTransactions}
+            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <CreditCard className="w-5 h-5 text-blue-400" />
+            <span className="text-sm">Transactions</span>
+          </button>
+          <button 
+            onClick={onShowMiningPackages}
+            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Pickaxe className="w-5 h-5 text-orange-400" />
+            <span className="text-sm">Mining Packages</span>
+          </button>
+          <button 
+            onClick={onShowHelpline}
+            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <HelpCircle className="w-5 h-5 text-green-400" />
+            <span className="text-sm">Helpline</span>
+          </button>
+          <button 
+            onClick={onShowAbout}
+            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+          >
+            <Info className="w-5 h-5 text-purple-400" />
+            <span className="text-sm">About</span>
+          </button>
         </div>
       </div>
       {/* TradingView Chart */}

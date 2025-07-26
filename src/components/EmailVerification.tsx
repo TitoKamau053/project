@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Mail, CheckCircle, AlertCircle, RefreshCw, Send } from 'lucide-react';
 import { useEmailVerificationStatus } from '../hooks/useEmailVerificationStatus';
 import { userAPI } from '../utils/api';
+import { Logo } from './Logo';
 
 interface EmailVerificationProps {
   email: string;
@@ -105,12 +106,8 @@ export const EmailVerification = ({ email, onBack, onVerificationComplete }: Ema
         <div className="w-full max-w-md space-y-6">
           {/* Icon and Status */}
           <div className="text-center">
-            <div className="w-20 h-20 mx-auto mb-6 bg-orange-500/20 rounded-full flex items-center justify-center">
-              {isVerified ? (
-                <CheckCircle className="w-10 h-10 text-green-500" />
-              ) : (
-                <Mail className="w-10 h-10 text-orange-500" />
-              )}
+            <div className="mx-auto mb-6">
+              <Logo size="xl" />
             </div>
             
             {isVerified ? (

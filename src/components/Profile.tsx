@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, User, Mail, Phone, Shield, Bell, CreditCard, Users, HelpCircle, LogOut, Edit3, Check, X } from 'lucide-react';
 import { userAPI, purchaseAPI, referralAPI } from '../utils/api';
+import { Logo } from './Logo';
 
 interface ProfileProps {
   onBack: () => void;
@@ -135,11 +136,7 @@ export const Profile = ({ onBack, onLogout }: ProfileProps) => {
         {/* Profile Header */}
         <div className="bg-slate-800 rounded-lg p-6 mb-6">
           <div className="flex items-center space-x-4 mb-4">
-            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">
-                {profileData.firstName[0]}{profileData.lastName[0]}
-              </span>
-            </div>
+            <Logo size="lg" />
             <div>
               <h2 className="text-white text-xl font-bold">
                 {profileData.firstName} {profileData.lastName}

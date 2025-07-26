@@ -9,7 +9,7 @@ interface NavigationProps {
 export const Navigation = ({ activeTab, setActiveTab, onSupportClick }: NavigationProps) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'mining', label: 'Mining Now', icon: Zap },
+    { id: 'mining', label: 'Active Engine', icon: Zap },
     { id: 'stake', label: 'Stake', icon: DollarSign },
     { id: 'earnings', label: 'Earnings', icon: TrendingUp },
     { id: 'network', label: 'Network', icon: Users },

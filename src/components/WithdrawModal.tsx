@@ -9,7 +9,10 @@ interface WithdrawModalProps {
 export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
   const [selectedNetwork, setSelectedNetwork] = useState('mpesa');
   const [amount, setAmount] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(() => {
+    // Auto-fill phone number from localStorage
+    return localStorage.getItem('userPhoneNumber') || '';
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -31,6 +34,44 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
     }
   ];
 
+  // Phone number validation function
+  const validatePhoneNumber = (phone: string): { isValid: boolean; message?: string } => {
+    // Remove all non-digit characters
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Check if it matches Kenyan format (254XXXXXXX - should be 12 digits total)
+    if (cleanPhone.length === 12 && cleanPhone.startsWith('254')) {
+      return { isValid: true };
+    }
+    
+    // Check if it matches local format (07XXXXXXX, 01XXXXXXX - should be 10 digits)
+    if (cleanPhone.length === 10 && (cleanPhone.startsWith('07') || cleanPhone.startsWith('01'))) {
+      return { isValid: true };
+    }
+    
+    return { 
+      isValid: false, 
+      message: 'Please enter a valid phone number. Format: 254788888888 or 0788888888' 
+    };
+  };
+
+  // Format phone number for API (ensure it's in 254XXXXXXX format)
+  const formatPhoneNumber = (phone: string): string => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // If it's already in international format (254XXXXXXX)
+    if (cleanPhone.startsWith('254')) {
+      return cleanPhone;
+    }
+    
+    // If it's in local format (07XXXXXXX, 01XXXXXXX), convert to international
+    if (cleanPhone.startsWith('0')) {
+      return '254' + cleanPhone.substring(1);
+    }
+    
+    return cleanPhone;
+  };
+
   const handleWithdraw = async () => {
     setError(null);
     setSuccessMessage(null);
@@ -42,16 +83,26 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
       setError('Please enter your phone number');
       return;
     }
+
+    // Validate phone number
+    const phoneValidation = validatePhoneNumber(phoneNumber);
+    if (!phoneValidation.isValid) {
+      setError(phoneValidation.message || 'Invalid phone number format');
+      return;
+    }
     setLoading(true);
     try {
+      // Format phone number for API
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      
       await withdrawalAPI.request({
         amount: parseFloat(amount),
         account_details: {
           type: selectedNetwork,
-          phone: phoneNumber
+          phone: formattedPhone
         }
       });
-      setSuccessMessage('Withdrawal request submitted successfully');
+      setSuccessMessage('Your withdrawal request has been received. It is currently being processed and will reflect shortly.');
       if (onBack) onBack();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initiate withdrawal');
@@ -117,10 +168,10 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-          placeholder="Enter your M-Pesa number"
+          placeholder="254788888888 or 0788888888"
         />
         <p className="text-slate-500 text-sm mt-1">
-          Enter your {selectedNetwork === 'mpesa' ? 'M-Pesa' : 'Airtel Money'} registered phone number
+          Enter your {selectedNetwork === 'mpesa' ? 'M-Pesa' : 'Airtel Money'} registered phone number (Format: 254788888888 or 0788888888)
         </p>
       </div>
 
@@ -138,7 +189,7 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           <div>
             <h4 className="text-white font-semibold mb-1">Important Notice</h4>
             <p className="text-slate-400 text-sm">
-              Ensure your phone number is correct. Withdrawals to wrong numbers cannot be reversed.
+              Ensure your phone number is correct and in the format 254788888888. Withdrawals to wrong numbers cannot be reversed.
             </p>
           </div>
         </div>

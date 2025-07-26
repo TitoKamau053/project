@@ -15,113 +15,38 @@ export const FAQ = ({ onBack }: FAQProps) => {
       faqs: [
         {
           id: 1,
-          question: "How do I create an account?",
-          answer: "Click on 'Sign Up' from the login page, fill in your personal details including name, email, and phone number. You'll also need to create a secure password and can optionally enter a referral code."
+          question: "How do I deposit funds into my account?",
+          answer: "You can deposit funds using M-Pesa or Cryptocurrency. Simply go to your Dashboard, click on \"Deposit\", enter the amount you want to fund, and follow the on-screen instructions to complete the process."
         },
         {
           id: 2,
-          question: "How do I verify my account?",
-          answer: "After registration, verify your email address by clicking the link sent to your email. For enhanced security, you can also enable two-factor authentication in your profile settings."
+          question: "What are the minimum and maximum deposit amounts?",
+          answer: "You can deposit any amount starting from KES 5. However, to start mining, the minimum required amount is KES 500 via M-Pesa. The maximum amount allowed per account is KES 5,000,000."
         },
         {
           id: 3,
-          question: "What do I need to start mining?",
-          answer: "To start mining, you need to: 1) Create and verify your account, 2) Deposit funds using M-Pesa, Bank Transfer, or Cryptocurrency, 3) Choose a mining engine from the 'Mining Now' section, 4) Activate your chosen mining plan."
-        }
-      ]
-    },
-    {
-      title: "Deposits & Withdrawals",
-      faqs: [
+          question: "What are the withdrawal fees?",
+          answer: "There are no withdrawal fees. You receive 100% of your earnings."
+        },
         {
           id: 4,
-          question: "What payment methods are supported?",
-          answer: "We support M-Pesa (KES 100 - 300,000), Bank Transfer (KES 500 - 1,000,000), and Cryptocurrency deposits (KES 50 - 5,000,000). All deposits are processed securely and quickly."
+          question: "How do mining engines work?",
+          answer: "Mining engines use auto-mining to help you earn passively. You deposit a set amount, and the system automatically mines and gives you profit after a set time based on the plan you choose."
         },
         {
           id: 5,
-          question: "How long do deposits take to reflect?",
-          answer: "M-Pesa deposits are instant, Bank transfers take 1-2 hours, and Cryptocurrency deposits take 10-30 minutes depending on network confirmation."
+          question: "How do I earn from referrals?",
+          answer: "Simply share your unique referral link with others. When someone signs up using your link and makes their first deposit, you'll earn a 10% commission based on the amount they deposit. Referrals are completely optional."
         },
         {
           id: 6,
-          question: "What are the withdrawal fees?",
-          answer: "M-Pesa withdrawals: 2% fee, Bank transfers: KES 50 flat fee, Cryptocurrency withdrawals: 1.5% fee. Minimum withdrawal amounts apply for each method."
+          question: "Is my money safe with CryptoMine Pro?",
+          answer: "Yes, your money is safe. We use bank-level encryption, secure payment processors, and store all funds in segregated accounts. Our platform follows strict security protocols to keep your funds and data protected."
         },
         {
           id: 7,
-          question: "How long do withdrawals take?",
-          answer: "M-Pesa: 1-5 minutes, Bank transfers: 2-24 hours, Cryptocurrency: 10-60 minutes. Processing times may vary during peak periods or due to network conditions."
-        }
-      ]
-    },
-    {
-      title: "Mining & Investments",
-      faqs: [
-        {
-          id: 8,
-          question: "How do mining engines work?",
-          answer: "Mining engines are automated investment plans where you invest a fixed amount for a specific duration and ROI. The system automatically generates returns based on the mining engine's parameters without requiring manual intervention."
-        },
-        {
-          id: 9,
-          question: "What are the available mining plans?",
-          answer: "We offer various plans: Daily Mine Pro (10% ROI, 1 day), Crypto Blast (25% ROI, 1 day), Triple Mine (35% ROI, 10 hours). Each plan has different investment amounts and durations."
-        },
-        {
-          id: 10,
           question: "Can I cancel an active mining investment?",
-          answer: "No, active mining investments cannot be cancelled once started. However, you can choose not to reinvest when the current mining period expires."
-        },
-        {
-          id: 11,
-          question: "When do I receive my mining rewards?",
-          answer: "Mining rewards are automatically credited to your account when the mining period expires. You can then choose to withdraw the funds or reinvest in another mining engine."
-        }
-      ]
-    },
-    {
-      title: "Referral Program",
-      faqs: [
-        {
-          id: 12,
-          question: "How does the referral program work?",
-          answer: "Share your unique referral link from the Network section. When someone registers using your link and makes their first deposit, you earn 10% commission on their deposit amount."
-        },
-        {
-          id: 13,
-          question: "When do I receive referral commissions?",
-          answer: "Referral commissions are credited immediately when your referred user makes a qualifying deposit. The commission appears in your earnings and can be withdrawn or reinvested."
-        },
-        {
-          id: 14,
-          question: "Is there a limit to how many people I can refer?",
-          answer: "No, there's no limit to the number of people you can refer. The more active referrals you have, the more commission you can earn from the program."
-        }
-      ]
-    },
-    {
-      title: "Security & Account",
-      faqs: [
-        {
-          id: 15,
-          question: "How is my money protected?",
-          answer: "We use bank-level encryption, secure payment processors, and store funds in segregated accounts. All transactions are monitored and we maintain strict security protocols to protect your investments."
-        },
-        {
-          id: 16,
-          question: "What if I forget my password?",
-          answer: "Click 'Forgot Password' on the login page and enter your email address. You'll receive instructions to reset your password securely."
-        },
-        {
-          id: 17,
-          question: "How can I enable two-factor authentication?",
-          answer: "Go to Profile → Security Settings → Two-Factor Authentication. Follow the setup instructions to add an extra layer of security to your account."
-        },
-        {
-          id: 18,
-          question: "What should I do if I notice suspicious activity?",
-          answer: "Immediately contact our support team through WhatsApp (+254 700 000 000) or email (support@cryptominepro.com). Also, change your password and enable 2FA if not already active."
+          answer: "Once a mining engine is activated, it cannot be cancelled until it completes its cycle. However, when the mining period ends, you can choose not to reload or reactivate the engine."
         }
       ]
     }

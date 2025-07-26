@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { userAPI } from '../utils/api';
 
 interface VerificationStatus {
   isVerified: boolean;
@@ -27,56 +28,57 @@ export const useEmailVerificationStatus = (email: string) => {
     setStatus(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-      const response = await fetch(
-        `${apiUrl}/users/verification-status?email=${encodeURIComponent(email)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        }
-      );
+      const response = await userAPI.checkVerificationStatus(email);
       
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success && data.data) {
+      if (response.success && response.data) {
         setStatus({
-          isVerified: data.data.is_verified,
+          isVerified: response.data.is_verified || response.data.email_verified,
           isLoading: false,
           error: null,
           lastChecked: now
         });
       } else {
-        throw new Error(data.message || 'Failed to check verification status');
+        setStatus({
+          isVerified: false,
+          isLoading: false,
+          error: response.message || 'Failed to check verification status',
+          lastChecked: now
+        });
       }
     } catch (error) {
-      console.error('Verification status check error:', error);
-      setStatus(prev => ({
-        ...prev,
+      console.error('Email verification status check failed:', error);
+      setStatus({
+        isVerified: false,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : 'Failed to check verification status',
         lastChecked: now
-      }));
+      });
     }
   }, [email, status.lastChecked]);
 
-  // Check status on mount and when email changes
+  // Auto-check on mount and when email changes
   useEffect(() => {
     if (email) {
       checkStatus();
     }
-  }, [email]);
+  }, [email, checkStatus]);
 
-  // Clear browser cache for verification status
+  // Set up polling for verification status every 30 seconds
   useEffect(() => {
-    localStorage.removeItem('emailVerificationStatus');
-    sessionStorage.removeItem('emailVerificationStatus');
-  }, []);
+    if (!email || status.isVerified) return;
 
-  return { ...status, checkStatus };
+    const interval = setInterval(() => {
+      checkStatus();
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [email, status.isVerified, checkStatus]);
+
+  return {
+    isVerified: status.isVerified,
+    isLoading: status.isLoading,
+    error: status.error,
+    lastChecked: status.lastChecked,
+    checkStatus
+  };
 };

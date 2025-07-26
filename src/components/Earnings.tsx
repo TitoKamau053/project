@@ -94,19 +94,35 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
   // Default success stories (fallback if no real data)
   const defaultSuccessStories: SuccessStory[] = [
     {
-      name: "James K.",
-      avatar: "J",
-      story: "Started with KES 5,000 and now earning KES 25,000 monthly. CryptoMine Pro changed my financial life!",
-      total: "+KES 120,450 total",
-      time: "2 days ago",
+      name: "Grace N.",
+      avatar: "G",
+      story: "I began with just KES 2,000. Now, I earn daily without lifting a finger. CryptoMine Pro is my silent partner!",
+      total: "+KES 87,300 total",
+      time: "3 days ago",
       verified: true
     },
     {
-      name: "Sarah M.",
-      avatar: "S",
-      story: "In just 3 months I've doubled my initial investment. The automated system works perfectly!",
-      total: "+KES 78,200 total",
-      time: "1 week ago",
+      name: "Dennis T.",
+      avatar: "D",
+      story: "CryptoMine Pro made me believe in smart income. I've earned over 5x my capital in just a few weeks!",
+      total: "+KES 589,100 total",
+      time: "12 hours ago",
+      verified: true
+    },
+    {
+      name: "Kevin M.",
+      avatar: "K",
+      story: "KES 3,000 was all I had. Now, I've automated my earnings. I even withdrew KES 15,000 this morning!",
+      total: "+KES 206,900 total",
+      time: "4 hours ago",
+      verified: true
+    },
+    {
+      name: "Brian O.",
+      avatar: "B",
+      story: "I used to rely on my salary alone. After joining with KES 10,000, I now earn KES 3,000+ daily. This is real!",
+      total: "+KES 212,700 total",
+      time: "1 day ago",
       verified: true
     }
   ];
@@ -124,7 +140,7 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
         </div>
         <div className="bg-slate-800 px-3 py-1 rounded-lg">
           <span className="text-slate-400 text-sm">Active: </span>
-          <span className="text-white font-bold">{earningsData.activeInvestments} Investments</span>
+          <span className="text-white font-bold">{earningsData.activeInvestments} Mining Input</span>
         </div>
       </div>
 

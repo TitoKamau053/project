@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Filter, Download, ArrowUpRight, ArrowDownLeft, Clock, Check, X } from 'lucide-react';
+import { transactionAPI } from '../utils/api';
 
 interface TransactionHistoryProps {
   onBack: () => void;
@@ -15,88 +16,87 @@ interface Transaction {
   method?: string;
   description: string;
   reference?: string;
+  created_at?: string;
+}
+
+interface BackendTransaction {
+  id: number;
+  type: string;
+  amount: string | number;
+  status: string;
+  created_at: string;
+  payment_method?: string;
+  method?: string;
+  description?: string;
+  reference?: string;
+  transaction_id?: string;
 }
 
 export const TransactionHistory = ({ onBack }: TransactionHistoryProps) => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [selectedPeriod, setSelectedPeriod] = useState('30');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const transactions: Transaction[] = [
-    {
-      id: 'T001',
-      type: 'deposit',
-      amount: 5000,
-      status: 'completed',
-      date: '2025-01-17',
-      time: '14:30',
-      method: 'M-Pesa',
-      description: 'Account deposit via M-Pesa',
-      reference: 'MP17011430'
-    },
-    {
-      id: 'T002',
-      type: 'mining',
-      amount: 500,
-      status: 'completed',
-      date: '2025-01-17',
-      time: '10:15',
-      description: 'Daily Mine Pro - Mining reward',
-      reference: 'MR17011015'
-    },
-    {
-      id: 'T003',
-      type: 'withdrawal',
-      amount: 2000,
-      status: 'pending',
-      date: '2025-01-16',
-      time: '16:45',
-      method: 'M-Pesa',
-      description: 'Withdrawal to M-Pesa',
-      reference: 'WD16011645'
-    },
-    {
-      id: 'T004',
-      type: 'referral',
-      amount: 250,
-      status: 'completed',
-      date: '2025-01-15',
-      time: '09:20',
-      description: 'Referral commission from John K.',
-      reference: 'RF15010920'
-    },
-    {
-      id: 'T005',
-      type: 'deposit',
-      amount: 10000,
-      status: 'completed',
-      date: '2025-01-14',
-      time: '11:30',
-      method: 'Bank Transfer',
-      description: 'Account deposit via Bank Transfer',
-      reference: 'BT14011130'
-    },
-    {
-      id: 'T006',
-      type: 'mining',
-      amount: 750,
-      status: 'completed',
-      date: '2025-01-13',
-      time: '15:45',
-      description: 'Crypto Blast - Mining reward',
-      reference: 'MR13011545'
-    },
-    {
-      id: 'T007',
-      type: 'withdrawal',
-      amount: 3000,
-      status: 'failed',
-      date: '2025-01-12',
-      time: '08:15',
-      method: 'M-Pesa',
-      description: 'Failed withdrawal - Insufficient balance',
-      reference: 'WD12010815'
+  // Fetch transactions from backend
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Pass filters to the API
+        const filters = {
+          type: selectedFilter,
+          period: selectedPeriod,
+        };
+        
+        const response = await transactionAPI.getUserTransactions(filters);
+        
+        // Transform backend response to match our interface
+        const transformedTransactions = response.transactions?.map((transaction: BackendTransaction) => ({
+          id: transaction.id.toString(),
+          type: transaction.type as 'deposit' | 'withdrawal' | 'mining' | 'referral' || 'deposit',
+          amount: parseFloat(transaction.amount?.toString() || '0'),
+          status: transaction.status as 'completed' | 'pending' | 'failed' || 'pending',
+          date: transaction.created_at ? new Date(transaction.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          time: transaction.created_at ? new Date(transaction.created_at).toTimeString().slice(0, 5) : new Date().toTimeString().slice(0, 5),
+          method: transaction.payment_method || transaction.method || 'M-Pesa',
+          description: transaction.description || getDefaultDescription(transaction.type, parseFloat(transaction.amount?.toString() || '0')),
+          reference: transaction.reference || transaction.transaction_id || `TX${transaction.id}`,
+          created_at: transaction.created_at
+        })) || [];
+        
+        setTransactions(transformedTransactions);
+      } catch (err) {
+        console.error('Failed to fetch transactions:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load transaction history');
+        // Use empty array as fallback if API fails
+        setTransactions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [selectedFilter, selectedPeriod]); // Re-fetch when filters change
+
+  // Helper function to generate default descriptions
+  const getDefaultDescription = (type: string, amount: number) => {
+    switch (type) {
+      case 'deposit':
+        return `Account deposit of KES ${amount.toLocaleString()}`;
+      case 'withdrawal':
+        return `Withdrawal of KES ${amount.toLocaleString()}`;
+      case 'mining':
+        return `Mining reward of KES ${amount.toLocaleString()}`;
+      case 'referral':
+        return `Referral commission of KES ${amount.toLocaleString()}`;
+      default:
+        return `Transaction of KES ${amount.toLocaleString()}`;
     }
-  ];
+  };
 
   const filteredTransactions = transactions.filter(transaction => {
     if (selectedFilter === 'all') return true;
@@ -183,7 +183,11 @@ export const TransactionHistory = ({ onBack }: TransactionHistoryProps) => {
           <span>Back</span>
         </button>
         <h1 className="text-white font-bold text-lg">Transaction History</h1>
-        <button className="text-slate-400 hover:text-white transition-colors">
+        <button 
+          className="text-slate-400 hover:text-white transition-colors"
+          title="Export transactions"
+          aria-label="Export transactions"
+        >
           <Download className="w-5 h-5" />
         </button>
       </div>
@@ -270,7 +274,24 @@ export const TransactionHistory = ({ onBack }: TransactionHistoryProps) => {
             Recent Transactions ({filteredTransactions.length})
           </h3>
           
-          {filteredTransactions.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <Clock className="w-12 h-12 text-slate-400 mx-auto mb-4 animate-spin" />
+              <p className="text-slate-400">Loading transactions...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <X className="w-12 h-12 text-red-400 mx-auto mb-4" />
+              <p className="text-red-400 mb-2">Failed to load transactions</p>
+              <p className="text-slate-400 text-sm">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          ) : filteredTransactions.length > 0 ? (
             <div className="space-y-3">
               {filteredTransactions.map((transaction) => (
                 <div

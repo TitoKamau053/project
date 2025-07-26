@@ -13,6 +13,9 @@ import { EmailVerifyPage } from './components/EmailVerifyPage';
 import { Profile } from './components/Profile';
 import { Support } from './components/Support';
 import { AdminDashboard } from './components/AdminDashboard';
+import { TransactionHistory } from './components/TransactionHistory';
+import { About } from './components/About';
+import { Toast } from './components/Toast';
 import { userAPI } from './utils/api';
 import { setScrollFlag } from './utils/scrollUtils';
 
@@ -26,7 +29,7 @@ interface User {
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification' | 'email-verify-page'>('login');
+  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification' | 'email-verify-page' | 'transactions' | 'about'>('login');
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,13 +40,75 @@ function AppContent() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
+    const verified = urlParams.get('verified');
+    const email = urlParams.get('email');
+    const verification = urlParams.get('verification');
+    const message = urlParams.get('message');
     
+    // Handle new token-based verification format
     if (token) {
       setVerificationToken(token);
       setCurrentView('email-verify-page');
-      // Clear the URL parameters to avoid reprocessing
-      window.history.replaceState({}, document.title, window.location.pathname);
+      // Clear the URL parameters to avoid reprocessing but keep the clean URL
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
       return;
+    }
+    
+    // Handle backend redirect verification format
+    if (verification && email) {
+      const decodedEmail = decodeURIComponent(email);
+      setVerificationEmail(decodedEmail);
+      
+      if (verification === 'success') {
+        setVerificationToken('backend-success');
+      } else if (verification === 'already_verified') {
+        setVerificationToken('already-verified');
+      } else if (verification === 'error') {
+        // Use the message parameter to set specific error token
+        const errorType = message || 'unknown_error';
+        setVerificationToken(`verification-error-${errorType}`);
+      }
+      
+      setCurrentView('email-verify-page');
+      // Clear the URL parameters to avoid reprocessing but keep the clean URL
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      return;
+    }
+    
+    // Handle legacy verification-success format from old backend
+    if (verified === 'true' && email) {
+      // Decode the email if it's URL encoded
+      const decodedEmail = decodeURIComponent(email);
+      setVerificationEmail(decodedEmail);
+      setVerificationToken('legacy-verification');
+      setCurrentView('email-verify-page');
+      // Clear the URL parameters to avoid reprocessing but keep the clean URL
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      return;
+    }
+    
+    // Handle case where user clicks backend verification link directly
+    // This catches URLs like: /?verified=true&email=...
+    // or cases where the backend redirects with query parameters
+    const currentPath = window.location.pathname;
+    const hasVerificationParams = verified || email || verification;
+    
+    if (hasVerificationParams && currentPath === '/') {
+      // If we have verification-related parameters but no specific format matched above,
+      // treat it as a legacy verification attempt
+      if (email) {
+        const decodedEmail = decodeURIComponent(email);
+        setVerificationEmail(decodedEmail);
+        setVerificationToken('legacy-verification');
+        setCurrentView('email-verify-page');
+        // Clear the URL parameters
+        const newUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+        return;
+      }
     }
   }, []);
 
@@ -158,14 +223,36 @@ function AppContent() {
     setScrollFlag('scrollToProfitEngines');
   };
 
+  // Handle show transaction history
+  const handleShowTransactions = () => {
+    setCurrentView('transactions');
+  };
+
+  // Handle show helpline/support
+  const handleShowHelpline = () => {
+    setCurrentView('support');
+  };
+
+  // Handle show about page
+  const handleShowAbout = () => {
+    setCurrentView('about');
+  };
+
+  // Handle show mining packages (stake page)
+  const handleShowMiningPackages = () => {
+    setActiveTab('stake');
+  };
+
   // Show loading while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-white text-center">
-          <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <span className="text-white font-bold text-sm">C</span>
-          </div>
+          <img 
+            src="/CryptoMinePro.jpeg" 
+            alt="CryptoMine Pro Logo" 
+            className="w-12 h-12 rounded-full object-cover mx-auto mb-4 animate-pulse"
+          />
           <p>Loading CryptoMine Pro...</p>
         </div>
       </div>
@@ -245,12 +332,38 @@ function AppContent() {
     );
   }
 
+  // Transaction History view
+  if (currentView === 'transactions') {
+    return (
+      <TransactionHistory
+        onBack={() => setCurrentView('app')}
+      />
+    );
+  }
+
+  // About view
+  if (currentView === 'about') {
+    return (
+      <About
+        onBack={() => setCurrentView('app')}
+      />
+    );
+  }
+
   // Default authenticated user dashboard - only for non-admin users
   if (user.role !== 'admin') {
     const renderContent = () => {
       switch (activeTab) {
         case 'dashboard':
-          return <Dashboard onActivateMine={handleActivateMine} />;
+          return (
+            <Dashboard 
+              onActivateMine={handleActivateMine}
+              onShowTransactions={handleShowTransactions}
+              onShowMiningPackages={handleShowMiningPackages}
+              onShowHelpline={handleShowHelpline}
+              onShowAbout={handleShowAbout}
+            />
+          );
         case 'mining':
           return <MiningNow />;
         case 'stake':
@@ -260,7 +373,15 @@ function AppContent() {
         case 'network':
           return <Network />;
         default:
-          return <Dashboard onActivateMine={handleActivateMine} />;
+          return (
+            <Dashboard 
+              onActivateMine={handleActivateMine}
+              onShowTransactions={handleShowTransactions}
+              onShowMiningPackages={handleShowMiningPackages}
+              onShowHelpline={handleShowHelpline}
+              onShowAbout={handleShowAbout}
+            />
+          );
       }
     };
 

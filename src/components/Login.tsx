@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { authAPI } from '../utils/api';
 import { userAPI } from '../utils/api';
+import { Logo } from './Logo';
 
 interface User {
   id: number;
   email: string;
   full_name: string;
+  phone: string;
   role: string;
   created_at: string;
 }
@@ -15,12 +18,13 @@ interface LoginProps {
   onLogin: (token: string, user: User) => void;
   onSwitchToSignup: () => void;
   onShowEmailVerification: (email: string) => void;
+  onShowToast?: (message: string, type: 'success' | 'error') => void;
 }
 
-export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerification }: LoginProps) => {
+export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerification, onShowToast }: LoginProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
+    phone: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -35,17 +39,19 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
     setShowResendVerification(false);
     
     try {
-      // Login with backend API
+      // Login with backend API using phone number
       const response = await userAPI.login({
-        email: formData.email,
+        phone: formData.phone,
         password: formData.password
       });
       
       // Store token and user data
       localStorage.setItem('token', response.token);
       localStorage.setItem('userJustLoggedIn', 'true');
+      localStorage.setItem('userPhoneNumber', formData.phone); // Store phone number for auto-fill
       
       onLogin(response.token, response.user);
+      onShowToast?.('Login successful! Welcome back.', 'success');
     } catch (err) {
       if (err instanceof Error) {
         const errorMessage = err.message;
@@ -54,14 +60,16 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
         if (errorMessage.includes('Email not verified')) {
           setError('Please verify your email before logging in.');
           setShowResendVerification(true);
-        } else if (errorMessage.includes('Invalid email or password')) {
-          setError('Invalid email or password.');
+        } else if (errorMessage.includes('Invalid phone number or password')) {
+          onShowToast?.('Login failed. Please try again.', 'error');
+          setError('Login failed. Please try again.');
         } else if (errorMessage.includes('Account is suspended')) {
+          onShowToast?.('Login failed. Please try again.', 'error');
           setError('This account has been suspended.');
         } else if (errorMessage.includes('User not found')) {
           setError(
             <div>
-              No account found with this email address.{' '}
+              No account found with this phone number.{' '}
               <button 
                 onClick={onSwitchToSignup}
                 className="text-orange-500 hover:text-orange-400 underline"
@@ -71,9 +79,11 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
             </div>
           );
         } else {
-          setError(errorMessage);
+          onShowToast?.('Login failed. Please try again.', 'error');
+          setError('Login failed. Please try again.');
         }
       } else {
+        onShowToast?.('Login failed. Please try again.', 'error');
         setError('Login failed. Please try again.');
       }
     } finally {
@@ -86,30 +96,34 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
     setError(null);
     
     try {
-      const response = await userAPI.resendVerification(formData.email);
+      // We need to get the email from the user's phone number first
+      // This assumes the API can handle phone number lookups for verification
+      const response = await userAPI.resendVerificationByPhone(formData.phone);
       
       // Check if user is already verified
       if (response.already_verified) {
         setError(null);
-        alert('Your email is already verified! You can now log in.');
+        onShowToast?.('Your email is already verified! You can now log in.', 'success');
         // Clear the resend verification option since user is verified
         setShowResendVerification(false);
         return;
       }
       
       setError(null);
-      alert('Verification email sent! Please check your inbox.');
-      onShowEmailVerification(formData.email);
+      onShowToast?.('Verification email sent! Please check your inbox.', 'success');
+      onShowEmailVerification(response.email);
     } catch (err) {
       if (err instanceof Error) {
         if (err.message.includes('already verified')) {
           setError(null);
-          alert('Your email is already verified! You can now log in.');
+          onShowToast?.('Your email is already verified! You can now log in.', 'success');
           setShowResendVerification(false);
         } else {
+          onShowToast?.(err.message || 'Failed to send verification email.', 'error');
           setError(`Failed to send verification email: ${err.message}`);
         }
       } else {
+        onShowToast?.('Failed to send verification email.', 'error');
         setError('Failed to send verification email.');
       }
     } finally {
@@ -118,11 +132,13 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
   };
 
   const handleGoToVerification = () => {
-    if (!formData.email) {
-      setError('Please enter your email address first');
+    if (!formData.phone) {
+      setError('Please enter your phone number first');
       return;
     }
-    onShowEmailVerification(formData.email);
+    // We'll need to implement a way to get email from phone number
+    // For now, we'll show a generic message
+    setError('Please contact support to resend your verification email.');
   };
 
   return (
@@ -145,9 +161,7 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
         <div className="w-full max-w-md space-y-6">
           {/* Logo */}
           <div className="text-center">
-            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">C</span>
-            </div>
+            <Logo size="xl" className="mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
             <p className="text-slate-400">Sign in to your CryptoMine Pro account</p>
           </div>
@@ -181,14 +195,14 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
 
             <div>
               <label className="block text-slate-400 text-sm font-medium mb-2">
-                Email Address
+                Phone Number
               </label>
               <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                placeholder="Enter your email"
+                placeholder="+254 7XX XXX XXX"
                 required
               />
             </div>
