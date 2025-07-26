@@ -56,7 +56,7 @@ interface Transaction {
   status: string;
   created_at: string;
   method?: string;
-  account_details?: string;
+  account_details?: string | { type: string; phone: string };
   // Deposit specific fields
   full_name?: string;
   email?: string;
@@ -1236,8 +1236,15 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
                       KES {withdrawal.amount.toLocaleString()}
                     </div>
                     <div className="text-slate-300">
-                      <div className="truncate max-w-32" title={withdrawal.account_details}>
-                        {withdrawal.account_details || 'N/A'}
+                      <div className="truncate max-w-32" title={
+                        typeof withdrawal.account_details === 'object' && withdrawal.account_details 
+                          ? `${withdrawal.account_details.type}: ${withdrawal.account_details.phone}`
+                          : withdrawal.account_details
+                      }>
+                        {typeof withdrawal.account_details === 'object' && withdrawal.account_details 
+                          ? `${withdrawal.account_details.type}: ${withdrawal.account_details.phone}`
+                          : withdrawal.account_details || 'N/A'
+                        }
                       </div>
                     </div>
                     <div>
