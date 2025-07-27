@@ -226,7 +226,7 @@ export const Stake = () => {
                   <div className="flex items-center space-x-4 text-white text-sm">
                     <div className="flex items-center space-x-1">
                       <Zap className="w-4 h-4" />
-                      <span>{engines[0]?.daily_earning_rate}% ROI</span>
+                      <span>{parseFloat(engines[0]?.daily_earning_rate || '0').toFixed(2)}% ROI</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Clock className="w-4 h-4" />
@@ -282,7 +282,7 @@ export const Stake = () => {
                 <div className="space-y-2 mb-3">
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400 text-xs">ROI:</span>
-                    <span className="text-green-500 text-sm font-bold">{engine.daily_earning_rate}%</span>
+                    <span className="text-green-500 text-sm font-bold">{parseFloat(engine.daily_earning_rate || '0').toFixed(2)}%</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400 text-xs">Duration:</span>
