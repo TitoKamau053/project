@@ -16,7 +16,7 @@ export const Homepage = ({ onGetStarted, onLearnMore, onLogin }: HomepageProps) 
           <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
             <Zap className="w-5 h-5 text-white" />
           </div>
-          <span className="text-orange-500 font-bold text-lg md:text-xl">SwiftXchange</span>
+          <span className="text-orange-500 font-bold text-lg md:text-xl">CryptoMine Pro</span>
         </div>
         <nav className="hidden md:flex items-center space-x-6">
           <a href="#features" className="text-slate-300 hover:text-white transition-colors">Features</a>

@@ -8,8 +8,6 @@ import { Navigation } from './components/Navigation';
 import { Header } from './components/Header';
 import { Login } from './components/Login';
 import { Signup } from './components/Signup';
-import { EmailVerification } from './components/EmailVerification';
-import { EmailVerifyPage } from './components/EmailVerifyPage';
 import { Profile } from './components/Profile';
 import { Support } from './components/Support';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -187,8 +185,26 @@ function AppContent() {
     );
   }
 
-  // Handle unauthenticated views (login and signup)
+  // Handle unauthenticated views (login, signup, terms, and about)
   if (!isAuthenticated || !user) {
+    // Terms of Service view - accessible without authentication
+    if (currentView === 'terms') {
+      return (
+        <TermsOfService
+          onBack={() => setCurrentView('signup')}
+        />
+      );
+    }
+    
+    // About view - accessible without authentication
+    if (currentView === 'about') {
+      return (
+        <About
+          onBack={() => setCurrentView('homepage')}
+        />
+      );
+    }
+    
     if (currentView === 'signup') {
       return (
         <Signup
@@ -200,12 +216,22 @@ function AppContent() {
       );
     }
     
-    // Default to login view for unauthenticated users
+    if (currentView === 'login') {
+      return (
+        <Login
+          onBack={() => setCurrentView('homepage')}
+          onLogin={handleLogin}
+          onSwitchToSignup={() => setCurrentView('signup')}
+        />
+      );
+    }
+    
+    // Default to homepage for unauthenticated users
     return (
-      <Login
-        onBack={() => setCurrentView('homepage')}
-        onLogin={handleLogin}
-        onSwitchToSignup={() => setCurrentView('signup')}
+      <Homepage
+        onGetStarted={() => setCurrentView('signup')}
+        onLearnMore={() => setCurrentView('about')}
+        onLogin={() => setCurrentView('login')}
       />
     );
   }
@@ -244,24 +270,6 @@ function AppContent() {
     return (
       <TransactionHistory
         onBack={() => setCurrentView('app')}
-      />
-    );
-  }
-
-  // About view
-  if (currentView === 'about') {
-    return (
-      <About
-        onBack={() => setCurrentView('app')}
-      />
-    );
-  }
-
-  // Terms of Service view
-  if (currentView === 'terms') {
-    return (
-      <TermsOfService
-        onBack={() => setCurrentView('signup')}
       />
     );
   }
