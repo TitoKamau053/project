@@ -132,7 +132,7 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 max-w-full overflow-x-hidden">
       
       {/* Error Message */}
       {error && (
@@ -148,12 +148,12 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
         </div>
         <div className="flex items-center space-x-3 mb-2">
           <Zap className="w-6 h-6 text-white" />
-          <h2 className="text-white font-bold text-lg">INSTANT 50% PROFIT!</h2>
+          <h2 className="text-white font-bold text-base sm:text-lg">INSTANT 50% PROFIT!</h2>
         </div>
         <p className="text-white text-sm mb-3">
           <strong>RIGHT NOW:</strong> Invest into Hourly Mine Engines and get <strong>50% EXTRA</strong> in just 60 minutes!
         </p>
-        <div className="flex items-center space-x-4 text-white text-sm mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-white text-sm mb-4">
           <div className="flex items-center space-x-1">
             <Zap className="w-4 h-4" />
             <span>Instant bonus payout</span>
@@ -209,74 +209,74 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
       {/* Balance */}
       <div>
         <p className="text-slate-400 text-sm mb-1">Total Balance</p>
-        <h2 className="text-orange-500 text-3xl font-bold mb-4">KES {balance}</h2>
+        <h2 className="text-orange-500 text-2xl sm:text-3xl font-bold mb-4">KES {balance}</h2>
         <div className="grid grid-cols-2 gap-3">
           <button 
             onClick={handleDepositClick}
-            className="bg-orange-500 text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-orange-600 transition-colors"
+            className="bg-orange-500 text-white py-3 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-orange-600 transition-colors"
           >
-            <Plus className="w-5 h-5" />
-            <span>Deposit</span>
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm sm:text-base">Deposit</span>
           </button>
           <button 
             onClick={handleWithdrawClick}
-            className="bg-slate-700 text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-slate-600 transition-colors"
+            className="bg-slate-700 text-white py-3 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-slate-600 transition-colors"
           >
-            <ArrowUp className="w-5 h-5" />
-            <span>Withdraw</span>
+            <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="text-sm sm:text-base">Withdraw</span>
           </button>
         </div>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-slate-800 rounded-lg p-4">
+        <div className="bg-slate-800 rounded-lg p-3 sm:p-4">
           <div className="flex items-center space-x-2 mb-2">
-            <TrendingUp className="w-5 h-5 text-green-500" />
-            <span className="text-slate-400 text-sm">Today's Profit</span>
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+            <span className="text-slate-400 text-xs sm:text-sm">Today's Profit</span>
           </div>
-          <p className="text-white text-lg font-bold">KES {totalProfit}</p>
+          <p className="text-white text-base sm:text-lg font-bold break-words">KES {totalProfit}</p>
         </div>
-        <div className="bg-slate-800 rounded-lg p-4">
+        <div className="bg-slate-800 rounded-lg p-3 sm:p-4">
           <div className="flex items-center space-x-2 mb-2">
-            <Users className="w-5 h-5 text-blue-500" />
-            <span className="text-slate-400 text-sm">Active Miners</span>
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+            <span className="text-slate-400 text-xs sm:text-sm">My Active Mines</span>
           </div>
-          <p className="text-white text-lg font-bold">{activeMiners}</p>
+          <p className="text-white text-base sm:text-lg font-bold">{activeMiners}</p>
         </div>
       </div>
 
       {/* Dashboard Action Buttons */}
       <div className="bg-slate-800 rounded-lg p-4">
         <h3 className="text-white font-semibold mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <button 
             onClick={onShowTransactions}
-            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-slate-700 hover:bg-slate-600 text-white p-2 sm:p-3 rounded-lg flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 transition-colors"
           >
-            <CreditCard className="w-5 h-5 text-blue-400" />
-            <span className="text-sm">Transactions</span>
+            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
+            <span className="text-xs sm:text-sm">Transactions</span>
           </button>
           <button 
             onClick={onShowMiningPackages}
-            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-slate-700 hover:bg-slate-600 text-white p-2 sm:p-3 rounded-lg flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 transition-colors"
           >
-            <Pickaxe className="w-5 h-5 text-orange-400" />
-            <span className="text-sm">Mining Packages</span>
+            <Pickaxe className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
+            <span className="text-xs sm:text-sm">Mining Packages</span>
           </button>
           <button 
             onClick={onShowHelpline}
-            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-slate-700 hover:bg-slate-600 text-white p-2 sm:p-3 rounded-lg flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 transition-colors"
           >
-            <HelpCircle className="w-5 h-5 text-green-400" />
-            <span className="text-sm">Helpline</span>
+            <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+            <span className="text-xs sm:text-sm">Helpline</span>
           </button>
           <button 
             onClick={onShowAbout}
-            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-slate-700 hover:bg-slate-600 text-white p-2 sm:p-3 rounded-lg flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 transition-colors"
           >
-            <Info className="w-5 h-5 text-purple-400" />
-            <span className="text-sm">About</span>
+            <Info className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+            <span className="text-xs sm:text-sm">About</span>
           </button>
         </div>
       </div>

@@ -166,9 +166,9 @@ export const Stake = () => {
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h2 className="text-orange-500 text-xl font-bold">Mining Operations</h2>
           <p className="text-slate-400 text-sm">Active mining operations</p>
@@ -180,7 +180,7 @@ export const Stake = () => {
 
       {/* Countdown Timer */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <Clock className="w-6 h-6 text-white" />
             <div>
@@ -188,7 +188,7 @@ export const Stake = () => {
               <p className="text-blue-200 text-sm">Time remaining to start new operations</p>
             </div>
           </div>
-          <div className="text-right">
+          <div className="text-center sm:text-right">
             <div className="text-white text-2xl font-bold font-mono">
               {formatCountdown(countdown)}
             </div>
@@ -250,12 +250,12 @@ export const Stake = () => {
             All Engines
           </div>
 
-          {/* Engine Grid - 2 Columns */}
-          <div className="grid grid-cols-2 gap-4" ref={profitEnginesRef}>
+          {/* Engine Grid - Responsive */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" ref={profitEnginesRef}>
             {engines.map((engine: MiningEngine, index: number) => (
               <div
                 key={engine.id}
-                className={`bg-slate-800 rounded-lg p-4 border-2 transition-colors ${
+                className={`bg-slate-800 rounded-lg p-4 border-2 transition-colors cursor-pointer ${
                   selectedEngine === index ? 'border-orange-500' : 'border-slate-700'
                 }`}
                 onClick={() => setSelectedEngine(index)}
@@ -290,7 +290,7 @@ export const Stake = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-400 text-xs">Price:</span>
-                    <span className="text-white text-sm font-bold">KSh {engine.price}</span>
+                    <span className="text-white text-sm font-bold break-words">KSh {engine.price}</span>
                   </div>
                 </div>
 
@@ -301,9 +301,9 @@ export const Stake = () => {
                     handlePurchase(engine.id, parseFloat(engine.price));
                   }}
                   disabled={purchaseLoading}
-                  className="w-full bg-orange-500 text-white py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors disabled:opacity-50"
+                  className="w-full bg-orange-500 text-white py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
                 >
-                  {purchaseLoading ? 'Purchasing...' : 'INVEST NOW'}
+                  {purchaseLoading ? 'Activating...' : 'ACTIVATE'}
                 </button>
               </div>
             ))}

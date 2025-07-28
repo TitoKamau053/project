@@ -15,7 +15,8 @@ import { Support } from './components/Support';
 import { AdminDashboard } from './components/AdminDashboard';
 import { TransactionHistory } from './components/TransactionHistory';
 import { About } from './components/About';
-import { Toast } from './components/Toast';
+import { Homepage } from './components/Homepage';
+import { TermsOfService } from './components/TermsOfService';
 import { userAPI } from './utils/api';
 import { setScrollFlag } from './utils/scrollUtils';
 
@@ -29,87 +30,15 @@ interface User {
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentView, setCurrentView] = useState<'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification' | 'email-verify-page' | 'transactions' | 'about'>('login');
+  const [currentView, setCurrentView] = useState<'homepage' | 'app' | 'login' | 'signup' | 'admin' | 'profile' | 'support' | 'email-verification' | 'email-verify-page' | 'transactions' | 'about' | 'terms'>('homepage');
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [verificationEmail, setVerificationEmail] = useState<string>('');
-  const [verificationToken, setVerificationToken] = useState<string>('');
 
-  // Check for email verification token in URL
+  // Check for email verification token in URL - DISABLED
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const verified = urlParams.get('verified');
-    const email = urlParams.get('email');
-    const verification = urlParams.get('verification');
-    const message = urlParams.get('message');
-    
-    // Handle new token-based verification format
-    if (token) {
-      setVerificationToken(token);
-      setCurrentView('email-verify-page');
-      // Clear the URL parameters to avoid reprocessing but keep the clean URL
-      const newUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      return;
-    }
-    
-    // Handle backend redirect verification format
-    if (verification && email) {
-      const decodedEmail = decodeURIComponent(email);
-      setVerificationEmail(decodedEmail);
-      
-      if (verification === 'success') {
-        setVerificationToken('backend-success');
-      } else if (verification === 'already_verified') {
-        setVerificationToken('already-verified');
-      } else if (verification === 'error') {
-        // Use the message parameter to set specific error token
-        const errorType = message || 'unknown_error';
-        setVerificationToken(`verification-error-${errorType}`);
-      }
-      
-      setCurrentView('email-verify-page');
-      // Clear the URL parameters to avoid reprocessing but keep the clean URL
-      const newUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      return;
-    }
-    
-    // Handle legacy verification-success format from old backend
-    if (verified === 'true' && email) {
-      // Decode the email if it's URL encoded
-      const decodedEmail = decodeURIComponent(email);
-      setVerificationEmail(decodedEmail);
-      setVerificationToken('legacy-verification');
-      setCurrentView('email-verify-page');
-      // Clear the URL parameters to avoid reprocessing but keep the clean URL
-      const newUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, newUrl);
-      return;
-    }
-    
-    // Handle case where user clicks backend verification link directly
-    // This catches URLs like: /?verified=true&email=...
-    // or cases where the backend redirects with query parameters
-    const currentPath = window.location.pathname;
-    const hasVerificationParams = verified || email || verification;
-    
-    if (hasVerificationParams && currentPath === '/') {
-      // If we have verification-related parameters but no specific format matched above,
-      // treat it as a legacy verification attempt
-      if (email) {
-        const decodedEmail = decodeURIComponent(email);
-        setVerificationEmail(decodedEmail);
-        setVerificationToken('legacy-verification');
-        setCurrentView('email-verify-page');
-        // Clear the URL parameters
-        const newUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-        return;
-      }
-    }
+    // Email verification redirects have been disabled
+    // Users must manually navigate to email verification if needed
   }, []);
 
   // Check authentication status when component mounts
@@ -138,13 +67,13 @@ function AppContent() {
           // Clear invalid token and user data
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          setCurrentView('login');
+          setCurrentView('homepage');
           setIsAuthenticated(false);
           setUser(null);
         }
       } else {
-        // No stored authentication
-        setCurrentView('login');
+        // No stored authentication - show homepage
+        setCurrentView('homepage');
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -173,17 +102,10 @@ function AppContent() {
     }
   };
 
-  const handleSignup = (_token: string, userData: User) => {
-    // Ensure created_at field exists, provide default if missing
-    const userWithCreatedAt = {
-      ...userData,
-      created_at: userData.created_at || new Date().toISOString()
-    };
-    
-    setUser(userWithCreatedAt);
-    setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(userWithCreatedAt));
-    setCurrentView('app');
+  const handleSignup = () => {
+    // After successful signup, redirect directly to login page
+    // No email verification required
+    setCurrentView('login');
   };
 
   const handleLogout = async () => {
@@ -193,7 +115,7 @@ function AppContent() {
       localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
-      setCurrentView('login');
+      setCurrentView('homepage');
       setActiveTab('dashboard');
     } catch (error) {
       console.error('Logout error:', error);
@@ -202,19 +124,14 @@ function AppContent() {
       localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
-      setCurrentView('login');
+      setCurrentView('homepage');
       setActiveTab('dashboard');
     }
   };
 
-  const handleShowEmailVerification = (email: string) => {
-    setVerificationEmail(email);
-    setCurrentView('email-verification');
-  };
-
-  const handleVerificationComplete = () => {
-    setCurrentView('login');
-    setVerificationEmail('');
+  // Handle show terms of service
+  const handleShowTerms = () => {
+    setCurrentView('terms');
   };
 
   // Handle "Activate Mine" button click from Dashboard
@@ -259,35 +176,26 @@ function AppContent() {
     );
   }
 
+  // Handle homepage view
+  if (currentView === 'homepage') {
+    return (
+      <Homepage
+        onGetStarted={() => setCurrentView('signup')}
+        onLearnMore={() => setCurrentView('about')}
+        onLogin={() => setCurrentView('login')}
+      />
+    );
+  }
+
   // Handle unauthenticated views (login and signup)
   if (!isAuthenticated || !user) {
-    if (currentView === 'email-verify-page') {
-      return (
-        <EmailVerifyPage
-          token={verificationToken}
-          onBack={() => setCurrentView('login')}
-          onVerificationComplete={handleVerificationComplete}
-        />
-      );
-    }
-
     if (currentView === 'signup') {
       return (
         <Signup
-          onBack={() => setCurrentView('login')}
+          onBack={() => setCurrentView('homepage')}
           onSignup={handleSignup}
           onSwitchToLogin={() => setCurrentView('login')}
-          onShowEmailVerification={handleShowEmailVerification}
-        />
-      );
-    }
-
-    if (currentView === 'email-verification') {
-      return (
-        <EmailVerification
-          email={verificationEmail}
-          onBack={() => setCurrentView('login')}
-          onVerificationComplete={handleVerificationComplete}
+          onShowTerms={handleShowTerms}
         />
       );
     }
@@ -295,10 +203,9 @@ function AppContent() {
     // Default to login view for unauthenticated users
     return (
       <Login
-        onBack={() => setCurrentView('login')}
+        onBack={() => setCurrentView('homepage')}
         onLogin={handleLogin}
         onSwitchToSignup={() => setCurrentView('signup')}
-        onShowEmailVerification={handleShowEmailVerification}
       />
     );
   }
@@ -346,6 +253,15 @@ function AppContent() {
     return (
       <About
         onBack={() => setCurrentView('app')}
+      />
+    );
+  }
+
+  // Terms of Service view
+  if (currentView === 'terms') {
+    return (
+      <TermsOfService
+        onBack={() => setCurrentView('signup')}
       />
     );
   }
@@ -416,10 +332,9 @@ function AppContent() {
   // Fallback - should not reach here
   return (
     <Login
-      onBack={() => setCurrentView('login')}
+      onBack={() => setCurrentView('homepage')}
       onLogin={handleLogin}
       onSwitchToSignup={() => setCurrentView('signup')}
-      onShowEmailVerification={handleShowEmailVerification}
     />
   );
 }

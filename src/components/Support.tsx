@@ -15,46 +15,60 @@ export const Support = ({ onBack }: SupportProps) => {
     priority: 'medium'
   });
 
+  const handleContactClick = (channelId: string, contact: string) => {
+    switch (channelId) {
+      case 'whatsapp':
+        window.open(`https://wa.me/254703819807?text=Hello,%20I%20need%20help%20with%20my%20CryptoMine%20Pro%20account`, '_blank');
+        break;
+      case 'telegram':
+        window.open(`https://t.me/cryptomine_pro`, '_blank');
+        break;
+      case 'phone':
+        window.open(`tel:+254703819807`, '_self');
+        break;
+      case 'email':
+        window.open(`mailto:support@cryptominepro.com?subject=Support%20Request&body=Hello,%20I%20need%20help%20with%20my%20account.`, '_self');
+        break;
+      default:
+        console.log('Contact method not supported');
+    }
+  };
+
   const faqData = [
     {
       id: 1,
       question: "How do I deposit funds into my account?",
-      answer: "You can deposit funds using M-Pesa, Bank Transfer, or Cryptocurrency. Go to the Deposit page, select your preferred method, enter the amount, and follow the instructions provided."
+      answer: "You can deposit funds using M-Pesa or Cryptocurrency. Simply go to your Dashboard, click on \"Deposit\", enter the amount you want to fund, and follow the on-screen instructions to complete the process."
     },
     {
       id: 2,
       question: "What are the minimum and maximum deposit amounts?",
-      answer: "Minimum deposits: M-Pesa (KES 100), Bank Transfer (KES 500), Crypto (KES 50). Maximum deposits: M-Pesa (KES 300,000), Bank Transfer (KES 1,000,000), Crypto (KES 5,000,000)."
+      answer: "You can deposit any amount starting from KES 5. However, to start mining, the minimum required amount is KES 500 via M-Pesa. The maximum amount allowed per account is KES 5,000,000."
     },
     {
       id: 3,
-      question: "How long does it take to process withdrawals?",
-      answer: "M-Pesa withdrawals are processed within 1-5 minutes, Bank transfers take 2-24 hours, and cryptocurrency withdrawals take 10-60 minutes depending on network congestion."
+      question: "What are the withdrawal fees?",
+      answer: "There are no withdrawal fees. You receive 100% of your earnings."
     },
     {
       id: 4,
-      question: "What are the withdrawal fees?",
-      answer: "M-Pesa withdrawals have a 2% fee, Bank transfers have a flat KES 50 fee, and cryptocurrency withdrawals have a 1.5% fee."
+      question: "How do mining engines work?",
+      answer: "Mining engines use auto-mining to help you earn passively. You deposit a set amount, and the system automatically mines and gives you profit after a set time based on the plan you choose."
     },
     {
       id: 5,
-      question: "How do mining engines work?",
-      answer: "Mining engines are automated investment plans that generate returns over specified periods. You invest a fixed amount, and the system automatically generates profits based on the ROI percentage and duration."
+      question: "How do I earn from referrals?",
+      answer: "Simply share your unique referral link with others. When someone signs up using your link and makes their first deposit, you'll earn a 10% commission based on the amount they deposit. Referrals are completely optional."
     },
     {
       id: 6,
-      question: "How do I earn from referrals?",
-      answer: "Share your unique referral link with friends. When they register and make their first deposit, you earn 10% commission on their deposit amount."
+      question: "Is my money safe with CryptoMine Pro?",
+      answer: "Yes, your money is safe. We use bank-level encryption, secure payment processors, and store all funds in segregated accounts. Our platform follows strict security protocols to keep your funds and data protected."
     },
     {
       id: 7,
-      question: "Is my money safe with CryptoMine Pro?",
-      answer: "Yes, we use bank-level encryption and secure payment processors. All funds are stored in segregated accounts and we maintain strict security protocols."
-    },
-    {
-      id: 8,
       question: "Can I cancel an active mining investment?",
-      answer: "Active mining investments cannot be cancelled once started. However, you can choose not to reinvest when the mining period expires."
+      answer: "Once a mining engine is activated, it cannot be cancelled until it completes its cycle. However, when the mining period ends, you can choose not to reload or reactivate the engine."
     }
   ];
 
@@ -224,7 +238,10 @@ export const Support = ({ onBack }: SupportProps) => {
                             <span>Response: {channel.responseTime}</span>
                           </div>
                         </div>
-                        <button className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors">
+                        <button 
+                          onClick={() => handleContactClick(channel.id, channel.contact)}
+                          className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                        >
                           Contact
                         </button>
                       </div>

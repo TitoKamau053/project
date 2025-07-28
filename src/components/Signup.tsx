@@ -13,12 +13,12 @@ interface User {
 
 interface SignupProps {
   onBack: () => void;
-  onSignup: (token: string, user: User) => void;
+  onSignup: () => void;
   onSwitchToLogin: () => void;
-  onShowEmailVerification: (email: string) => void;
+  onShowTerms: () => void;
 }
 
-export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerification }: SignupProps) => {
+export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowTerms }: SignupProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -117,11 +117,11 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
         referral_code: formData.referralCode || undefined,
       });
       
-      setMessage(response.message || 'Registration successful! Please check your email to verify your account.');
+      setMessage(response.message || 'Registration successful! Redirecting to login...');
       
-      // Show verification screen after a short delay
+      // Redirect to login page after successful signup
       setTimeout(() => {
-        onShowEmailVerification(formData.email);
+        onSignup();
       }, 2000);
     } catch (err) {
       if (err instanceof Error) {
@@ -371,7 +371,11 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowEmailVerificat
               </div>
               <label htmlFor="terms" className="text-slate-400 text-sm leading-5">
                 I agree to the{' '}
-                <button type="button" className="text-orange-500 hover:text-orange-400 transition-colors">
+                <button 
+                  type="button" 
+                  onClick={onShowTerms}
+                  className="text-orange-500 hover:text-orange-400 transition-colors"
+                >
                   Terms of Service
                 </button>{' '}
                 and{' '}

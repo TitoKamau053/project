@@ -27,26 +27,41 @@ export const FAQ = ({ onBack }: FAQProps) => {
           id: 3,
           question: "What are the withdrawal fees?",
           answer: "There are no withdrawal fees. You receive 100% of your earnings."
-        },
+        }
+      ]
+    },
+    {
+      title: "Mining & Earnings",
+      faqs: [
         {
           id: 4,
           question: "How do mining engines work?",
           answer: "Mining engines use auto-mining to help you earn passively. You deposit a set amount, and the system automatically mines and gives you profit after a set time based on the plan you choose."
         },
         {
+          id: 7,
+          question: "Can I cancel an active mining investment?",
+          answer: "Once a mining engine is activated, it cannot be cancelled until it completes its cycle. However, when the mining period ends, you can choose not to reload or reactivate the engine."
+        }
+      ]
+    },
+    {
+      title: "Referrals & Bonuses",
+      faqs: [
+        {
           id: 5,
           question: "How do I earn from referrals?",
           answer: "Simply share your unique referral link with others. When someone signs up using your link and makes their first deposit, you'll earn a 10% commission based on the amount they deposit. Referrals are completely optional."
-        },
+        }
+      ]
+    },
+    {
+      title: "Security & Support",
+      faqs: [
         {
           id: 6,
           question: "Is my money safe with CryptoMine Pro?",
           answer: "Yes, your money is safe. We use bank-level encryption, secure payment processors, and store all funds in segregated accounts. Our platform follows strict security protocols to keep your funds and data protected."
-        },
-        {
-          id: 7,
-          question: "Can I cancel an active mining investment?",
-          answer: "Once a mining engine is activated, it cannot be cancelled until it completes its cycle. However, when the mining period ends, you can choose not to reload or reactivate the engine."
         }
       ]
     }

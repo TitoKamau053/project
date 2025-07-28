@@ -59,7 +59,7 @@ function translateErrorMessage(serverMessage: string, statusCode: number): strin
     'Transaction failed': 'Transaction could not be processed. Please try again.',
     'Withdrawal limit exceeded': 'You have exceeded the daily withdrawal limit.',
     'Account suspended': 'Your account has been suspended. Please contact support.',
-    'Invalid phone number': 'Please enter a valid phone number.',
+    'Invalid phone number': 'Please enter a valid phone number (Format: 0788888888).',
     'Payment method not supported': 'This payment method is not currently supported.',
     'Email not verified': 'Please verify your email address before signing in.',
     'verify your email': 'Please verify your email address before signing in.',

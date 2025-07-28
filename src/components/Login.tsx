@@ -17,11 +17,10 @@ interface LoginProps {
   onBack: () => void;
   onLogin: (token: string, user: User) => void;
   onSwitchToSignup: () => void;
-  onShowEmailVerification: (email: string) => void;
   onShowToast?: (message: string, type: 'success' | 'error') => void;
 }
 
-export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerification, onShowToast }: LoginProps) => {
+export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowToast }: LoginProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     phone: '',
@@ -29,14 +28,11 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | JSX.Element | null>(null);
-  const [showResendVerification, setShowResendVerification] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setShowResendVerification(false);
     
     try {
       // Login with backend API using phone number
@@ -57,10 +53,7 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
         const errorMessage = err.message;
         
         // Handle specific API errors
-        if (errorMessage.includes('Email not verified')) {
-          setError('Please verify your email before logging in.');
-          setShowResendVerification(true);
-        } else if (errorMessage.includes('Invalid phone number or password')) {
+        if (errorMessage.includes('Invalid phone number or password')) {
           onShowToast?.('Login failed. Please try again.', 'error');
           setError('Login failed. Please try again.');
         } else if (errorMessage.includes('Account is suspended')) {
@@ -89,56 +82,6 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleResendVerification = async () => {
-    setResendLoading(true);
-    setError(null);
-    
-    try {
-      // We need to get the email from the user's phone number first
-      // This assumes the API can handle phone number lookups for verification
-      const response = await userAPI.resendVerificationByPhone(formData.phone);
-      
-      // Check if user is already verified
-      if (response.already_verified) {
-        setError(null);
-        onShowToast?.('Your email is already verified! You can now log in.', 'success');
-        // Clear the resend verification option since user is verified
-        setShowResendVerification(false);
-        return;
-      }
-      
-      setError(null);
-      onShowToast?.('Verification email sent! Please check your inbox.', 'success');
-      onShowEmailVerification(response.email);
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message.includes('already verified')) {
-          setError(null);
-          onShowToast?.('Your email is already verified! You can now log in.', 'success');
-          setShowResendVerification(false);
-        } else {
-          onShowToast?.(err.message || 'Failed to send verification email.', 'error');
-          setError(`Failed to send verification email: ${err.message}`);
-        }
-      } else {
-        onShowToast?.('Failed to send verification email.', 'error');
-        setError('Failed to send verification email.');
-      }
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
-  const handleGoToVerification = () => {
-    if (!formData.phone) {
-      setError('Please enter your phone number first');
-      return;
-    }
-    // We'll need to implement a way to get email from phone number
-    // For now, we'll show a generic message
-    setError('Please contact support to resend your verification email.');
   };
 
   return (
@@ -170,26 +113,7 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowEmailVerificati
             {/* Error Message */}
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <p className="text-red-400 font-medium mb-2">{error}</p>
-                {showResendVerification && (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={handleGoToVerification}
-                      className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
-                    >
-                      Go to Email Verification
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleResendVerification}
-                      disabled={resendLoading}
-                      className="w-full bg-slate-600 hover:bg-slate-700 disabled:opacity-50 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
-                    >
-                      {resendLoading ? 'Sending...' : 'Resend Verification Email'}
-                    </button>
-                  </div>
-                )}
+                <p className="text-red-400 font-medium">{error}</p>
               </div>
             )}
 

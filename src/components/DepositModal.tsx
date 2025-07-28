@@ -36,7 +36,7 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
     
     return { 
       isValid: false, 
-      message: 'Please enter a valid phone number. Format: 254788888888 or 0788888888' 
+      message: 'Please enter a valid phone number. Format: 0788888888 or 254788888888' 
     };
   };
 
@@ -145,7 +145,7 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-          placeholder="254788888888 or 0788888888"
+          placeholder="0788888888 or 254788888888"
         />
         <p className="text-slate-500 text-sm mt-1">
           Enter your M-Pesa registered phone number (Format: 254788888888 or 0788888888)

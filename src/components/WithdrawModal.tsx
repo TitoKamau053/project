@@ -51,7 +51,7 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
     
     return { 
       isValid: false, 
-      message: 'Please enter a valid phone number. Format: 254788888888 or 0788888888' 
+      message: 'Please enter a valid phone number. Format: 0788888888 or 254788888888' 
     };
   };
 
@@ -168,10 +168,10 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-          placeholder="254788888888 or 0788888888"
+          placeholder="0788888888 or 254788888888"
         />
         <p className="text-slate-500 text-sm mt-1">
-          Enter your {selectedNetwork === 'mpesa' ? 'M-Pesa' : 'Airtel Money'} registered phone number (Format: 254788888888 or 0788888888)
+          Enter your {selectedNetwork === 'mpesa' ? 'M-Pesa' : 'Airtel Money'} registered phone number (Format: 0788888888 or 254788888888)
         </p>
       </div>
 
@@ -189,7 +189,7 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           <div>
             <h4 className="text-white font-semibold mb-1">Important Notice</h4>
             <p className="text-slate-400 text-sm">
-              Ensure your phone number is correct and in the format 254788888888. Withdrawals to wrong numbers cannot be reversed.
+              Ensure your phone number is correct and in the format 0788888888. Withdrawals to wrong numbers cannot be reversed.
             </p>
           </div>
         </div>

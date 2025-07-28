@@ -131,9 +131,9 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
   const storiesToDisplay = successStories.length > 0 ? successStories : defaultSuccessStories;
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <div>
           <h2 className="text-orange-500 text-xl font-bold">Your Success Portfolio</h2>
           <p className="text-slate-400 text-sm">Track your investment growth</p>
@@ -155,13 +155,13 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
       ) : (
         <>
           {/* Portfolio Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-slate-800 rounded-lg p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-slate-800 rounded-lg p-3 sm:p-4">
               <div className="flex items-center space-x-2 mb-2">
-                <TrendingUp className="w-5 h-5 text-green-500" />
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                 <span className="text-slate-400 text-xs">Total Earnings</span>
               </div>
-              <p className="text-white text-lg font-bold">KES {earningsData.totalEarnings}</p>
+              <p className="text-white text-sm sm:text-lg font-bold">KES {earningsData.totalEarnings}</p>
             </div>
             <div className="bg-slate-800 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-2">

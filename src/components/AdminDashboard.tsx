@@ -110,6 +110,36 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
   const [userRoleFilter, setUserRoleFilter] = useState('');
   const [usersPagination, setUsersPagination] = useState({ page: 1, total: 0, pages: 1 });
 
+  // Phone number formatting function - convert 254XXXXXXX to 07/01 format for user-friendly display
+  const formatPhoneForDisplay = (phone: string): string => {
+    if (!phone) return 'N/A';
+    
+    // Clean the phone number
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Convert 254XXXXXXX to 07XXXXXXX or 01XXXXXXX format
+    if (cleanPhone.startsWith('254') && cleanPhone.length === 12) {
+      const localNumber = cleanPhone.substring(3); // Remove '254'
+      
+      // Convert to 07 or 01 format based on the original pattern
+      if (localNumber.startsWith('7')) {
+        return '07' + localNumber.substring(1);
+      } else if (localNumber.startsWith('1')) {
+        return '01' + localNumber.substring(1);
+      }
+      // For other patterns, keep as is but add 0 prefix
+      return '0' + localNumber;
+    }
+    
+    // If it's already in 07/01 format, return as is
+    if ((cleanPhone.startsWith('07') || cleanPhone.startsWith('01')) && cleanPhone.length === 10) {
+      return cleanPhone;
+    }
+    
+    // Return original if format is unrecognized
+    return phone;
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -1207,7 +1237,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
             <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium">
               <div>User</div>
               <div>Amount</div>
-              <div>Wallet/Account</div>
+              <div>Phone/Account</div>
               <div>Status</div>
               <div>Date</div>
               <div>Actions</div>
@@ -1236,15 +1266,17 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
                       KES {withdrawal.amount.toLocaleString()}
                     </div>
                     <div className="text-slate-300">
-                      <div className="truncate max-w-32" title={
-                        typeof withdrawal.account_details === 'object' && withdrawal.account_details 
-                          ? `${withdrawal.account_details.type}: ${withdrawal.account_details.phone}`
-                          : withdrawal.account_details
-                      }>
-                        {typeof withdrawal.account_details === 'object' && withdrawal.account_details 
-                          ? `${withdrawal.account_details.type}: ${withdrawal.account_details.phone}`
-                          : withdrawal.account_details || 'N/A'
-                        }
+                      <div className="max-w-32">
+                        {typeof withdrawal.account_details === 'object' && withdrawal.account_details ? (
+                          <div>
+                            <div className="text-xs text-slate-400">{withdrawal.account_details.type}</div>
+                            <div className="font-mono text-sm" title="Phone number formatted for easy reading">
+                              {formatPhoneForDisplay(withdrawal.account_details.phone)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-slate-400">N/A</div>
+                        )}
                       </div>
                     </div>
                     <div>
@@ -2044,25 +2076,25 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Admin Header */}
-      <header className="bg-slate-800 border-b border-slate-700 px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="bg-slate-800 border-b border-slate-700 px-4 lg:px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-white font-bold text-xl">Admin Dashboard</h1>
+              <h1 className="text-white font-bold text-lg lg:text-xl">Admin Dashboard</h1>
               <p className="text-slate-400 text-sm">CryptoMine Pro - Administration Panel</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <div className="text-left sm:text-right">
               <p className="text-white font-medium">{user?.full_name}</p>
               <p className="text-slate-400 text-sm">{user?.email}</p>
             </div>
             <button
               onClick={onLogout}
-              className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+              className="flex items-center justify-center sm:justify-start space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
               <LogOut className="w-4 h-4" />
               <span>Logout</span>
@@ -2071,11 +2103,11 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
-        <aside className="w-64 bg-slate-800 min-h-screen border-r border-slate-700">
+        <aside className="w-full lg:w-64 bg-slate-800 border-b lg:border-b-0 lg:border-r border-slate-700">
           <nav className="p-4">
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 lg:space-y-2">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -2083,14 +2115,14 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                    className={`w-full flex flex-col lg:flex-row items-center lg:space-x-3 space-y-1 lg:space-y-0 px-2 lg:px-4 py-2 lg:py-3 rounded-lg text-center lg:text-left transition-colors ${
                       isActive
                         ? 'bg-orange-500 text-white'
                         : 'text-slate-400 hover:text-white hover:bg-slate-700'
                     }`}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
+                    <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
+                    <span className="text-xs lg:text-sm">{item.label}</span>
                   </button>
                 );
               })}
@@ -2099,7 +2131,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 lg:p-6 overflow-x-auto">
           {renderContent()}
         </main>
       </div>
