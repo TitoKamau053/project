@@ -11,6 +11,8 @@ interface MiningEngine {
   daily_earning_rate: string;
   duration_days: number;
   is_active: boolean;
+  min_investment?: number;
+  max_investment?: number;
 }
 
 export const Stake = () => {
@@ -21,6 +23,11 @@ export const Stake = () => {
   const [error, setError] = useState<string | null>(null);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [countdown, setCountdown] = useState<number>(0);
+  const [showPurchaseSection, setShowPurchaseSection] = useState(false);
+  const [purchaseAmount, setPurchaseAmount] = useState('');
+  const purchaseSectionRef = useRef<HTMLDivElement>(null);
+  const [engineDetails, setEngineDetails] = useState<MiningEngine | null>(null);
+  const [purchaseFeedback, setPurchaseFeedback] = useState<string | null>(null);
   const profitEnginesRef = useRef<HTMLDivElement>(null);
 
   // Define scrollToProfitEngines function with useCallback
@@ -121,7 +128,8 @@ export const Stake = () => {
           userAPI.getProfile()
         ]);
         
-        setEngines(enginesResponse.engines || enginesResponse);
+        const sortedEngines = (enginesResponse.engines || enginesResponse).slice().sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        setEngines(sortedEngines);
         setBalance(profileResponse.user.balance || '0.00');
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -144,22 +152,47 @@ export const Stake = () => {
     }
   }, [scrollToProfitEngines]);
 
-  const handlePurchase = async (engineId: number, amount: number) => {
+  // Fetch engine details (with min/max investment) when user clicks purchase
+  const handleShowPurchase = async (engineId: number) => {
+    setPurchaseFeedback(null);
+    setPurchaseAmount('');
+    setShowPurchaseSection(true);
+    setEngineDetails(null);
+    try {
+      setPurchaseLoading(true);
+      // Fetch engine details from backend
+      const details = await miningAPI.getEngineById(engineId);
+      setEngineDetails(details.engine || details);
+      setTimeout(() => {
+        if (purchaseSectionRef.current) {
+          purchaseSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } catch (err) {
+      setPurchaseFeedback(err instanceof Error ? err.message : 'Failed to load engine details');
+    } finally {
+      setPurchaseLoading(false);
+    }
+  };
+
+  // Handle purchase form submit
+  const handlePurchaseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!engineDetails) return;
     setPurchaseLoading(true);
-    setError(null);
+    setPurchaseFeedback(null);
     try {
       await purchaseAPI.create({
-        engine_id: engineId,
-        amount: amount
+        engine_id: engineDetails.id,
+        amount: parseFloat(purchaseAmount)
       });
-      
       // Refresh balance after successful purchase
       const profileResponse = await userAPI.getProfile();
       setBalance(profileResponse.user.balance || '0.00');
-      
-      alert('Mining engine purchased successfully!');
+      setPurchaseFeedback('Mining engine purchased successfully!');
+      setShowPurchaseSection(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to purchase mining engine');
+      setPurchaseFeedback(err instanceof Error ? err.message : 'Failed to purchase mining engine');
     } finally {
       setPurchaseLoading(false);
     }
@@ -237,10 +270,12 @@ export const Stake = () => {
               </div>
               <p className="text-white text-sm mb-3">Investment: KSh {engines[0]?.price}</p>
               <button 
-                onClick={scrollToProfitEngines}
+                onClick={() => {
+                  if (engines[0]) handleShowPurchase(engines[0].id);
+                }}
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors"
               >
-                ACTIVATE MINE 🚀
+                ACTIVATE ENGINE NOW
               </button>
             </div>
           </div>
@@ -264,17 +299,17 @@ export const Stake = () => {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center space-x-2">
                     <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {engine.id}
+                      {index + 1}
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-sm">{engine.id}. {engine.name}</h3>
+                      <h3 className="text-white font-bold text-sm">No. {index + 1}. {engine.name}</h3>
                       {selectedEngine === index && (
                         <span className="text-orange-500 text-xs">Selected</span>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-white text-lg font-bold">{engine.id}</p>
+                    <p className="text-white text-lg font-bold">No. {index + 1}</p>
                   </div>
                 </div>
 
@@ -289,21 +324,26 @@ export const Stake = () => {
                     <span className="text-white text-sm">{engine.duration_days} Days</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400 text-xs">Price:</span>
+                    <span className="text-slate-400 text-xs">Minimum Price:</span>
                     <span className="text-white text-sm font-bold break-words">KSh {engine.price}</span>
                   </div>
                 </div>
 
                 {/* Purchase Button */}
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    handlePurchase(engine.id, parseFloat(engine.price));
+                    await handleShowPurchase(engine.id);
+                    setTimeout(() => {
+                      window.scrollTo({
+                        top: document.body.scrollHeight,
+                        behavior: 'smooth',
+                      });
+                    }, 100); // slight delay to ensure modal is rendered
                   }}
-                  disabled={purchaseLoading}
                   className="w-full bg-orange-500 text-white py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors disabled:opacity-50 text-sm sm:text-base"
                 >
-                  {purchaseLoading ? 'Activating...' : 'ACTIVATE'}
+                  ACTIVATE
                 </button>
               </div>
             ))}
@@ -311,6 +351,92 @@ export const Stake = () => {
         </>
       ) : (
         <div className="text-center text-slate-400">No mining engines available</div>
+      )}
+      {/* Purchase Section (Inline, not modal) */}
+      {showPurchaseSection && engineDetails && (
+        <div ref={purchaseSectionRef} className="mt-8 bg-slate-800 rounded-lg p-6 w-full max-w-2xl mx-auto shadow-lg">
+          <h3 className="text-white text-xl font-bold mb-4">Start New Profit Engines</h3>
+          <form onSubmit={handlePurchaseSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-400 text-sm font-medium mb-1">Selected Engine</label>
+                <input type="text" value={engineDetails.name} readOnly className="w-full bg-slate-700 text-white px-3 py-2 rounded" />
+              </div>
+              <div>
+                <label className="block text-slate-400 text-sm font-medium mb-1">Return Percentage</label>
+                <input type="text" value={parseFloat(engineDetails.daily_earning_rate || '0').toFixed(2) + '%'} readOnly className="w-full bg-slate-700 text-white px-3 py-2 rounded" />
+              </div>
+              <div>
+                <label className="block text-slate-400 text-sm font-medium mb-1">Duration</label>
+                <input type="text" value={engineDetails.duration_days + ' Day' + (engineDetails.duration_days > 1 ? 's' : '')} readOnly className="w-full bg-slate-700 text-white px-3 py-2 rounded" />
+              </div>
+              <div>
+                <label className="block text-slate-400 text-sm font-medium mb-1">Minimum Amount</label>
+                <input type="text" value={`KSh ${engineDetails.min_investment || engineDetails.price}`} readOnly className="w-full bg-slate-700 text-white px-3 py-2 rounded" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-slate-400 text-sm font-medium mb-1">Engine Amount (KSh)</label>
+              <input
+                type="number"
+                min={engineDetails.min_investment || engineDetails.price}
+                max={engineDetails.max_investment || ''}
+                step="0.01"
+                value={purchaseAmount}
+                onChange={e => setPurchaseAmount(e.target.value)}
+                className="w-full bg-slate-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                required
+              />
+              <div className="text-slate-400 text-xs mt-1">
+                Min: <span className="text-white font-bold">KES {engineDetails.min_investment || engineDetails.price}</span>
+                {engineDetails.max_investment && (
+                  <>
+                    {" | "}Max: <span className="text-white font-bold">KES {engineDetails.max_investment}</span>
+                  </>
+                )}
+              </div>
+            </div>
+            {purchaseFeedback && (
+              <div className={`p-2 rounded text-center ${purchaseFeedback.includes('success') ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                {purchaseFeedback}
+              </div>
+            )}
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded"
+                onClick={() => setShowPurchaseSection(false)}
+                disabled={purchaseLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded font-bold"
+                disabled={purchaseLoading}
+              >
+                {purchaseLoading ? 'Processing...' : 'Activate Engine Now'}
+              </button>
+            </div>
+          </form>
+          {/* Engine Summary Section */}
+          <div className="mt-6 bg-slate-900 rounded-lg p-4">
+            <h4 className="text-blue-200 font-bold mb-2 flex items-center"><span className="mr-2">📋</span>Engine Summary</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-800 rounded p-4 text-center">
+                <div className="text-slate-400 text-sm mb-1">You Invest</div>
+                <div className="text-2xl text-white font-bold">KSh {purchaseAmount || '0.00'}</div>
+              </div>
+              <div className="bg-slate-800 rounded p-4 text-center">
+                <div className="text-slate-400 text-sm mb-1">You Earn</div>
+                <div className="text-2xl text-green-400 font-bold">
+                  KSh {purchaseAmount && engineDetails.daily_earning_rate ? (parseFloat(purchaseAmount) * parseFloat(engineDetails.daily_earning_rate) * engineDetails.duration_days / 100).toFixed(2) : '0.00'}
+                </div>
+              </div>
+            </div>
+            <div className="text-slate-400 text-xs mt-2">Returns are calculated after Engine period ends</div>
+          </div>
+        </div>
       )}
     </div>
   );

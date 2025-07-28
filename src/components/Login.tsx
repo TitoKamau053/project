@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { authAPI } from '../utils/api';
 import { userAPI } from '../utils/api';
 import { Logo } from './Logo';
 
@@ -126,7 +125,7 @@ export const Login = ({ onBack, onLogin, onSwitchToSignup, onShowToast }: LoginP
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                placeholder="+254 7XX XXX XXX"
+                placeholder="07XXXXXXXX"
                 required
               />
             </div>

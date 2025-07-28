@@ -236,7 +236,7 @@ export const Signup = ({ onBack, onSignup, onSwitchToLogin, onShowTerms }: Signu
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
-                placeholder="Enter your phone number"
+                placeholder="0711111111"
                 required
               />
             </div>

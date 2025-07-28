@@ -13,7 +13,7 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
     return localStorage.getItem('userPhoneNumber') || '';
   });
 
-  const minAmount = 100;
+  const minAmount = 5;
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,18 +40,18 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
     };
   };
 
-  // Format phone number for API (ensure it's in 254XXXXXXX format)
+  // Format phone number for API (convert from international format to local format)
   const formatPhoneNumber = (phone: string): string => {
     const cleanPhone = phone.replace(/\D/g, '');
     
-    // If it's already in international format (254XXXXXXX)
+    // If it's in international format (254XXXXXXX), convert to local format
     if (cleanPhone.startsWith('254')) {
-      return cleanPhone;
+      return '0' + cleanPhone.substring(3);
     }
     
-    // If it's in local format (07XXXXXXX, 01XXXXXXX), convert to international
+    // If it's already in local format (07XXXXXXX, 01XXXXXXX)
     if (cleanPhone.startsWith('0')) {
-      return '254' + cleanPhone.substring(1);
+      return cleanPhone;
     }
     
     return cleanPhone;
@@ -61,10 +61,15 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
     setError(null);
     setSuccessMessage(null);
     
-    if (!amount || parseFloat(amount) < minAmount) {
-      setError('Please enter a valid amount');
+    const amountValue = parseFloat(amount);
+    
+    if (!amount || amountValue < minAmount) {
+      setError(`Please enter a valid amount (minimum deposit: KES ${minAmount})`);
       return;
     }
+    
+    // The backend will validate that the user's total balance doesn't exceed 5,000,000 KES
+    // but we can provide a friendly message if this happens
     
     if (!phoneNumber) {
       setError('Please enter your phone number');
@@ -133,6 +138,7 @@ export const DepositModal = ({ onBack }: DepositModalProps) => {
           min={minAmount}
         />
         <p className="text-slate-500 text-sm mt-1">
+          Minimum deposit: KES {minAmount} • Maximum capital: KES 5,000,000
         </p>
       </div>
 

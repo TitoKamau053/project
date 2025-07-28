@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
+import { withdrawalAPI } from '../utils/api';
 import { 
   Users, 
   DollarSign, 
@@ -16,8 +18,8 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
-import { apiAuthFetch } from '../utils/api';
-import { Logo } from './Logo';
+import { apiAuthFetch} from '../utils/api';
+
 
 interface User {
   id: number;
@@ -28,6 +30,8 @@ interface User {
   balance?: number;
   total_earnings?: number;
   referral_code?: string;
+  referrer_id?: number;
+  referrer_name?: string;
   created_at: string;
 }
 
@@ -283,13 +287,9 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
 
   const handleApproveWithdrawal = async (withdrawalId: number) => {
     try {
-      await apiAuthFetch(`/admin/withdrawals/${withdrawalId}/status`, {
-        method: 'PUT',
-        body: {
-          status: 'approved',
-          admin_notes: 'Approved by admin'
-        }
-      });
+      // Use the new API endpoint for approval
+      await withdrawalAPI.approve(withdrawalId);
+      
       // Refresh withdrawals data
       const withdrawalsResponse = await apiAuthFetch('/admin/withdrawals');
       if (withdrawalsResponse && withdrawalsResponse.withdrawals) {
@@ -300,7 +300,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
       if (statsResponse && statsResponse.stats) {
         setStats(statsResponse.stats);
       }
-      alert('Withdrawal approved successfully!');
+      alert('Withdrawal approved successfully! Email notification sent to user.');
     } catch (err) {
       console.error('Failed to approve withdrawal:', err);
       alert('Failed to approve withdrawal. Please try again.');
@@ -310,13 +310,13 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
   const handleRejectWithdrawal = async (withdrawalId: number) => {
     try {
       const reason = prompt('Enter rejection reason:');
-      await apiAuthFetch(`/admin/withdrawals/${withdrawalId}/status`, {
-        method: 'PUT',
-        body: {
-          status: 'rejected',
-          admin_notes: reason || 'Rejected by admin'
-        }
-      });
+      if (!confirm('Are you sure you want to reject this withdrawal? The funds will be returned to the user\'s balance.')) {
+        return;
+      }
+      
+      // Use the new API endpoint for rejection
+      await withdrawalAPI.reject(withdrawalId);
+      
       // Refresh withdrawals data
       const withdrawalsResponse = await apiAuthFetch('/admin/withdrawals');
       if (withdrawalsResponse && withdrawalsResponse.withdrawals) {
@@ -327,25 +327,21 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
       if (statsResponse && statsResponse.stats) {
         setStats(statsResponse.stats);
       }
-      alert('Withdrawal rejected successfully!');
+      alert('Withdrawal rejected successfully! Funds have been returned to user\'s balance and a notification email has been sent.');
     } catch (err) {
       console.error('Failed to reject withdrawal:', err);
       alert('Failed to reject withdrawal. Please try again.');
     }
   };
 
-  const handleProcessWithdrawal = async (withdrawalId: number) => {
+  const handleCompleteWithdrawal = async (withdrawalId: number) => {
     try {
       const transactionRef = prompt('Enter transaction reference:');
       if (!transactionRef) return;
       
-      await apiAuthFetch(`/admin/withdrawals/${withdrawalId}/process`, {
-        method: 'POST',
-        body: {
-          transaction_reference: transactionRef,
-          admin_notes: 'Payment processed by admin'
-        }
-      });
+      // Use the new API endpoint for completing withdrawals
+      await withdrawalAPI.complete(withdrawalId);
+      
       // Refresh withdrawals data
       const withdrawalsResponse = await apiAuthFetch('/admin/withdrawals');
       if (withdrawalsResponse && withdrawalsResponse.withdrawals) {
@@ -356,10 +352,39 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
       if (statsResponse && statsResponse.stats) {
         setStats(statsResponse.stats);
       }
-      alert('Withdrawal processed successfully!');
+      alert('Withdrawal marked as completed! An email notification has been sent to the user.');
     } catch (err) {
-      console.error('Failed to process withdrawal:', err);
-      alert('Failed to process withdrawal. Please try again.');
+      console.error('Failed to complete withdrawal:', err);
+      alert('Failed to complete withdrawal. Please try again.');
+    }
+  };
+  
+  const handleDeleteWithdrawal = async (withdrawalId: number) => {
+    try {
+      // Confirm deletion
+      if (!confirm('Are you sure you want to delete this withdrawal record? This action cannot be undone. If the withdrawal is pending, funds will be returned to the user\'s account.')) {
+        return;
+      }
+      
+      // Call the delete API endpoint using the withdrawalAPI utility
+      await withdrawalAPI.delete(withdrawalId);
+      
+      // Refresh withdrawals data
+      const withdrawalsResponse = await apiAuthFetch('/admin/withdrawals');
+      if (withdrawalsResponse && withdrawalsResponse.withdrawals) {
+        setWithdrawals(withdrawalsResponse.withdrawals);
+      }
+      
+      // Refresh stats
+      const statsResponse = await apiAuthFetch('/admin/stats');
+      if (statsResponse && statsResponse.stats) {
+        setStats(statsResponse.stats);
+      }
+      
+      alert('Withdrawal record deleted successfully!');
+    } catch (err) {
+      console.error('Failed to delete withdrawal:', err);
+      alert('Failed to delete withdrawal record. Please try again.');
     }
   };
 
@@ -911,12 +936,13 @@ const renderUserManagement = () => (
 
         {/* Header Grid */}
         <div className="overflow-x-auto">
-          <div className="grid grid-cols-7 gap-4 min-w-[1000px] text-slate-400 text-sm font-medium px-4">
+          <div className="grid grid-cols-8 gap-4 min-w-[1100px] text-slate-400 text-sm font-medium px-4">
             <div>User</div>
             <div>Email</div>
             <div>Role</div>
             <div>Status</div>
             <div>Balance</div>
+            <div>Referred By</div>
             <div>Joined</div>
             <div>Actions</div>
           </div>
@@ -936,7 +962,7 @@ const renderUserManagement = () => (
         <div className="divide-y divide-slate-700 overflow-x-auto">
           {users.map((user) => (
             <div key={user.id} className="p-4">
-              <div className="grid grid-cols-7 gap-4 items-center min-w-[1000px]">
+              <div className="grid grid-cols-8 gap-4 items-center min-w-[1100px]">
                 <div>
                   <div
                     className="font-medium text-white truncate max-w-[160px]"
@@ -983,6 +1009,10 @@ const renderUserManagement = () => (
 
                 <div className="text-white font-medium">
                   KES {(user.balance || 0).toLocaleString()}
+                </div>
+                
+                <div className="text-slate-300 text-sm truncate max-w-[160px]">
+                  {user.referrer_name ? user.referrer_name : 'Direct Signup'}
                 </div>
 
                 <div className="text-slate-400 text-sm">
@@ -1274,102 +1304,110 @@ const renderDepositManagement = () => {
         </div>
 
         <div className="bg-slate-800 rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-slate-700">
-            <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium">
-              <div>User</div>
-              <div>Amount</div>
-              <div>Phone/Account</div>
-              <div>Status</div>
-              <div>Date</div>
-              <div>Actions</div>
+          <div className="overflow-x-auto">
+            <div className="p-4 border-b border-slate-700">
+              <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium min-w-[900px]">
+                <div>User</div>
+                <div>Amount</div>
+                <div>Phone/Account</div>
+                <div>Status</div>
+                <div>Date</div>
+                <div>Actions</div>
+              </div>
             </div>
-          </div>
-          
-          {sectionLoading ? (
-            <div className="p-8 text-center">
-              <div className="text-slate-400">Loading withdrawals...</div>
-            </div>
-          ) : withdrawals.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="text-slate-400">No withdrawals found</div>
-              <p className="text-xs mt-2">Withdrawal requests will appear here once users request withdrawals</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-700">
-              {withdrawals.map((withdrawal) => (
-                <div key={withdrawal.id} className="p-4">
-                  <div className="grid grid-cols-6 gap-4 items-center">
-                    <div>
-                      <div className="font-medium text-white">{withdrawal.full_name || 'N/A'}</div>
-                      {/* <div className="text-slate-400 text-sm">{withdrawal.email || `User ${withdrawal.user_id}`}</div> */}
-                    </div>
-                    <div className="text-white font-semibold">
-                      KES {withdrawal.amount.toLocaleString()}
-                    </div>
-                    <div className="text-slate-300">
-                      <div className="max-w-32">
-                        {typeof withdrawal.account_details === 'object' && withdrawal.account_details ? (
-                          <div>
-                            <div className="text-xs text-slate-400">{withdrawal.account_details.type}</div>
-                            <div className="font-mono text-sm" title="Phone number formatted for easy reading">
-                              {formatPhoneForDisplay(withdrawal.account_details.phone)}
+            
+            {sectionLoading ? (
+              <div className="p-8 text-center">
+                <div className="text-slate-400">Loading withdrawals...</div>
+              </div>
+            ) : withdrawals.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="text-slate-400">No withdrawals found</div>
+                <p className="text-xs mt-2">Withdrawal requests will appear here once users request withdrawals</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-700">
+                {withdrawals.map((withdrawal) => (
+                  <div key={withdrawal.id} className="p-4">
+                    <div className="grid grid-cols-6 gap-4 items-center min-w-[900px]">
+                      <div>
+                        <div className="font-medium text-white">{withdrawal.full_name || 'N/A'}</div>
+                        {/* <div className="text-slate-400 text-sm">{withdrawal.email || `User ${withdrawal.user_id}`}</div> */}
+                      </div>
+                      <div className="text-white font-semibold">
+                        KES {withdrawal.amount.toLocaleString()}
+                      </div>
+                      <div className="text-slate-300">
+                        <div className="max-w-32">
+                          {typeof withdrawal.account_details === 'object' && withdrawal.account_details ? (
+                            <div>
+                              <div className="text-xs text-slate-400">{withdrawal.account_details.type}</div>
+                              <div className="font-mono text-sm" title="Phone number formatted for easy reading">
+                                {formatPhoneForDisplay(withdrawal.account_details.phone)}
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="text-slate-400">N/A</div>
+                          ) : (
+                            <div className="text-slate-400">N/A</div>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          withdrawal.status === 'completed' 
+                            ? 'bg-green-500/20 text-green-400'
+                            : withdrawal.status === 'pending'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : withdrawal.status === 'approved'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {withdrawal.status}
+                        </span>
+                      </div>
+                      <div className="text-slate-400 text-sm">
+                        {new Date(withdrawal.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="flex space-x-2 flex-wrap gap-2">
+                        {withdrawal.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => handleApproveWithdrawal(withdrawal.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button 
+                              onClick={() => handleRejectWithdrawal(withdrawal.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </>
                         )}
+                        {withdrawal.status === 'approved' && (
+                          <button 
+                            onClick={() => handleCompleteWithdrawal(withdrawal.id)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                          >
+                            Complete
+                          </button>
+                        )}
+                        <button className="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                          View
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteWithdrawal(withdrawal.id)}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
-                    <div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        withdrawal.status === 'completed' 
-                          ? 'bg-green-500/20 text-green-400'
-                          : withdrawal.status === 'pending'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : withdrawal.status === 'approved'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {withdrawal.status}
-                      </span>
-                    </div>
-                    <div className="text-slate-400 text-sm">
-                      {new Date(withdrawal.created_at).toLocaleDateString()}
-                    </div>
-                    <div className="flex space-x-2">
-                      {withdrawal.status === 'pending' && (
-                        <>
-                          <button 
-                            onClick={() => handleApproveWithdrawal(withdrawal.id)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button 
-                            onClick={() => handleRejectWithdrawal(withdrawal.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {withdrawal.status === 'approved' && (
-                        <button 
-                          onClick={() => handleProcessWithdrawal(withdrawal.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                        >
-                          Process
-                        </button>
-                      )}
-                      <button className="bg-slate-600 hover:bg-slate-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                        View
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -1433,7 +1471,7 @@ const renderDepositManagement = () => {
           <div className="p-4 border-b border-slate-700">
             <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium">
               <div>Engine Name</div>
-              <div>Price (KES)</div>
+              <div>Minimum Price (KES)</div>
               <div>Daily Rate (%)</div>
               <div>Duration</div>
               <div>Status</div>
@@ -1542,7 +1580,7 @@ const renderDepositManagement = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 text-sm font-medium mb-1">Price (KES)</label>
+                    <label className="block text-slate-400 text-sm font-medium mb-1">Minimum Price (KES)</label>
                     <input 
                       type="number" 
                       name="price"

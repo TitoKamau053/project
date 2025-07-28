@@ -58,6 +58,10 @@ function translateErrorMessage(serverMessage: string, statusCode: number): strin
     'Mining engine not found': 'The selected mining engine is no longer available.',
     'Transaction failed': 'Transaction could not be processed. Please try again.',
     'Withdrawal limit exceeded': 'You have exceeded the daily withdrawal limit.',
+    'Maximum withdrawal amount': 'Maximum withdrawal amount is KES 100,000.',
+    'Minimum withdrawal amount': 'Minimum withdrawal amount is KES 50.',
+    'Maximum investment capital': 'Maximum account capital limit of KES 5,000,000 would be exceeded.',
+    'Minimum deposit amount': 'Minimum deposit amount is KES 5.',
     'Account suspended': 'Your account has been suspended. Please contact support.',
     'Invalid phone number': 'Please enter a valid phone number (Format: 0788888888).',
     'Payment method not supported': 'This payment method is not currently supported.',
@@ -209,6 +213,10 @@ export const miningAPI = {
     return apiFetch('/mining-engines');
   },
 
+  getEngineById: async (engineId: number) => {
+    return apiFetch(`/mining-engines/${engineId}`);
+  },
+
   addEngine: async (engineData: object) => {
     return apiAuthFetch('/mining-engines', {
       method: 'POST',
@@ -236,9 +244,30 @@ export const withdrawalAPI = {
     });
   },
 
-  approve: async (withdrawalId: number) => {
+  approve: async (withdrawalId: string | number) => {
     return apiAuthFetch(`/withdrawals/approve/${withdrawalId}`, {
       method: 'POST',
+      body: { withdrawalId },
+    });
+  },
+
+  reject: async (withdrawalId: string | number) => {
+    return apiAuthFetch(`/withdrawals/reject/${withdrawalId}`, {
+      method: 'POST',
+      body: { withdrawalId },
+    });
+  },
+
+  delete: async (withdrawalId: string | number) => {
+    return apiAuthFetch(`/withdrawals/${withdrawalId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  complete: async (withdrawalId: string | number) => {
+    return apiAuthFetch(`/withdrawals/complete/${withdrawalId}`, {
+      method: 'POST',
+      // No body needed unless backend expects it
     });
   },
 };

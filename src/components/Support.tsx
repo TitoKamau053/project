@@ -43,7 +43,7 @@ export const Support = ({ onBack }: SupportProps) => {
     {
       id: 2,
       question: "What are the minimum and maximum deposit amounts?",
-      answer: "You can deposit any amount starting from KES 5. However, to start mining, the minimum required amount is KES 500 via M-Pesa. The maximum amount allowed per account is KES 5,000,000."
+      answer: "You can deposit any amount starting from KES 5. However, to start mining, the minimum required amount is KES 5 via M-Pesa. There is no maximum deposit limit, but the maximum capital allowed per account is KES 5,000,000."
     },
     {
       id: 3,

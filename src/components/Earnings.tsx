@@ -211,7 +211,6 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
                     )}
                   </div>
                 </div>
-                <span className="text-slate-400 text-xs">{story.time}</span>
               </div>
               <p className="text-slate-300 text-sm mb-3">"{story.story}"</p>
               <div className="flex justify-between items-center">

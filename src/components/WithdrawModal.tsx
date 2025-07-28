@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { DollarSign, AlertTriangle } from 'lucide-react';
+import {AlertTriangle, Check, X, Trash2 } from 'lucide-react';
 import { withdrawalAPI } from '../utils/api';
 
 interface WithdrawModalProps {
   onBack?: () => void;
+  isAdmin?: boolean;
+  withdrawalId?: string;
 }
 
-export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
+export const WithdrawModal = ({ onBack, isAdmin = false, withdrawalId }: WithdrawModalProps) => {
   const [selectedNetwork, setSelectedNetwork] = useState('mpesa');
   const [amount, setAmount] = useState('');
   const [phoneNumber, setPhoneNumber] = useState(() => {
@@ -16,20 +18,21 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   const networks = [
     {
       id: 'mpesa',
       name: 'M-Pesa',
-      minAmount: 200,
-      maxAmount: 70000,
+      minAmount: 50,
+      maxAmount: 100000,
       processingTime: '1-5 minutes'
     },
     {
       id: 'airtel',
       name: 'Airtel Money',
-      minAmount: 200,
-      maxAmount: 70000,
+      minAmount: 50,
+      maxAmount: 100000,
       processingTime: '1-5 minutes'
     }
   ];
@@ -55,18 +58,18 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
     };
   };
 
-  // Format phone number for API (ensure it's in 254XXXXXXX format)
+  // Format phone number for API (convert from international format to local format)
   const formatPhoneNumber = (phone: string): string => {
     const cleanPhone = phone.replace(/\D/g, '');
     
-    // If it's already in international format (254XXXXXXX)
+    // If it's in international format (254XXXXXXX), convert to local format
     if (cleanPhone.startsWith('254')) {
-      return cleanPhone;
+      return '0' + cleanPhone.substring(3);
     }
     
-    // If it's in local format (07XXXXXXX, 01XXXXXXX), convert to international
+    // If it's already in local format (07XXXXXXX, 01XXXXXXX)
     if (cleanPhone.startsWith('0')) {
-      return '254' + cleanPhone.substring(1);
+      return cleanPhone;
     }
     
     return cleanPhone;
@@ -75,15 +78,19 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
   const handleWithdraw = async () => {
     setError(null);
     setSuccessMessage(null);
-    if (!amount || parseFloat(amount) < 10000) {
-      setError('Please enter a valid amount (min KES 10000)');
+    const amountValue = parseFloat(amount);
+    if (!amount || amountValue < 50) {
+      setError('Please enter a valid amount (minimum withdrawal: KES 50)');
+      return;
+    }
+    if (amountValue > 100000) {
+      setError('Maximum withdrawal amount is KES 100,000');
       return;
     }
     if (!phoneNumber) {
       setError('Please enter your phone number');
       return;
     }
-
     // Validate phone number
     const phoneValidation = validatePhoneNumber(phoneNumber);
     if (!phoneValidation.isValid) {
@@ -94,7 +101,6 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
     try {
       // Format phone number for API
       const formattedPhone = formatPhoneNumber(phoneNumber);
-      
       await withdrawalAPI.request({
         amount: parseFloat(amount),
         account_details: {
@@ -102,10 +108,76 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           phone: formattedPhone
         }
       });
+      setShowPopup(true);
       setSuccessMessage('Your withdrawal request has been received. It is currently being processed and will reflect shortly.');
-      if (onBack) onBack();
+      setAmount('');
+      setPhoneNumber('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initiate withdrawal');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Admin functions for managing withdrawals
+  const handleApproveWithdrawal = async () => {
+    if (!withdrawalId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await withdrawalAPI.approve(withdrawalId);
+      setSuccessMessage('Withdrawal approved successfully. The funds have been sent to the user.');
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        if (onBack) onBack();
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to approve withdrawal');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleRejectWithdrawal = async () => {
+    if (!withdrawalId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await withdrawalAPI.reject(withdrawalId);
+      setSuccessMessage('Withdrawal rejected. The funds have been returned to the user\'s balance.');
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        if (onBack) onBack();
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reject withdrawal');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleDeleteWithdrawal = async () => {
+    if (!withdrawalId) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await withdrawalAPI.delete(withdrawalId);
+      setSuccessMessage('Withdrawal record deleted successfully.');
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        if (onBack) onBack();
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete withdrawal record');
     } finally {
       setLoading(false);
     }
@@ -118,7 +190,23 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           {error}
         </div>
       )}
-      {successMessage && (
+      {showPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-900 rounded-lg p-8 max-w-sm w-full flex flex-col items-center">
+            <Check className="w-12 h-12 text-green-500 mb-4" />
+            <h3 className="text-white text-lg font-bold mb-2">Withdrawal Request Received</h3>
+            <p className="text-slate-300 text-center mb-4">Your withdrawal request has been received.<br/>It is currently being processed and will reflect shortly.</p>
+            <button
+              className="mt-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+              onClick={() => {
+                setShowPopup(false);
+                if (onBack) onBack();
+              }}
+            >OK</button>
+          </div>
+        </div>
+      )}
+      {successMessage && !showPopup && (
         <div className="bg-green-600 text-white p-3 rounded mb-4 text-center">
           {successMessage}
         </div>
@@ -156,7 +244,11 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
           onChange={(e) => setAmount(e.target.value)}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
           placeholder="Enter amount"
+          min={50}
         />
+        <p className="text-slate-500 text-sm mt-1">
+          Minimum: KES 50 • Maximum: KES 100,000 • Zero transaction fees
+        </p>
       </div>
 
       <div>
@@ -175,13 +267,46 @@ export const WithdrawModal = ({ onBack }: WithdrawModalProps) => {
         </p>
       </div>
 
-      <button
-        onClick={handleWithdraw}
-        disabled={loading}
-        className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
-      >
-        {loading ? 'Submitting Withdrawal...' : 'Confirm Withdrawal'}
-      </button>
+      {isAdmin ? (
+        <div className="space-y-4">
+          <div className="flex space-x-2">
+            <button
+              onClick={handleApproveWithdrawal}
+              disabled={loading}
+              className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+            >
+              <Check className="w-5 h-5" />
+              <span>{loading ? 'Processing...' : 'Approve'}</span>
+            </button>
+            
+            <button
+              onClick={handleRejectWithdrawal}
+              disabled={loading}
+              className="flex-1 bg-red-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+            >
+              <X className="w-5 h-5" />
+              <span>{loading ? 'Processing...' : 'Reject'}</span>
+            </button>
+          </div>
+          
+          <button
+            onClick={handleDeleteWithdrawal}
+            disabled={loading}
+            className="w-full bg-slate-700 text-white py-3 rounded-lg font-semibold hover:bg-slate-600 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+          >
+            <Trash2 className="w-5 h-5" />
+            <span>{loading ? 'Processing...' : 'Delete'}</span>
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={handleWithdraw}
+          disabled={loading}
+          className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50"
+        >
+          {loading ? 'Submitting Withdrawal...' : 'Confirm Withdrawal'}
+        </button>
+      )}
 
       <div className="bg-slate-800 rounded-lg p-4 border-l-4 border-yellow-500">
         <div className="flex items-start space-x-3">

@@ -37,22 +37,22 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
 
   // Kenyan context simulated activities - updated with success stories data and big money values
   const simulatedActivities: Activity[] = [
-    { name: 'Grace N.', avatar: 'G', action: 'earned daily profit', amount: '+KES 87,300', time: '2 mins ago', crypto: 'BTC', color: 'bg-green-600' },
-    { name: 'Dennis T.', avatar: 'D', action: 'completed smart mining', amount: '+KES 89,100', time: '3 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
-    { name: 'Kevin M.', avatar: 'K', action: 'withdrew to M-Pesa', amount: '+KES 15,000', time: '5 mins ago', crypto: 'USDT', color: 'bg-orange-600' },
-    { name: 'Brian O.', avatar: 'B', action: 'earned daily reward', amount: '+KES 30,000', time: '7 mins ago', crypto: 'BTC', color: 'bg-purple-600' },
-    { name: 'Grace N.', avatar: 'G', action: 'deposited via M-Pesa', amount: '+KES 20,000', time: '8 mins ago', crypto: 'ETH', color: 'bg-teal-600' },
-    { name: 'Dennis T.', avatar: 'D', action: 'earned 5x capital', amount: '+KES 89,100', time: '10 mins ago', crypto: 'LTC', color: 'bg-indigo-600' },
-    { name: 'Kevin M.', avatar: 'K', action: 'activated automated earnings', amount: '+KES 26,900', time: '12 mins ago', crypto: 'BTC', color: 'bg-green-600' },
-    { name: 'Brian O.', avatar: 'B', action: 'completed mining cycle', amount: '+KES 12,700', time: '15 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
-    { name: 'Grace N.', avatar: 'G', action: 'silent partner earnings', amount: '+KES 70,300', time: '18 mins ago', crypto: 'USDT', color: 'bg-yellow-600' },
-    { name: 'Dennis T.', avatar: 'D', action: 'smart income generated', amount: '+KES 59,100', time: '20 mins ago', crypto: 'BTC', color: 'bg-orange-600' },
-    { name: 'Kevin M.', avatar: 'K', action: 'morning withdrawal', amount: '+KES 65,000', time: '22 mins ago', crypto: 'ETH', color: 'bg-purple-600' },
-    { name: 'Brian O.', avatar: 'B', action: 'daily earnings', amount: '+KES 84,000', time: '25 mins ago', crypto: 'BTC', color: 'bg-green-600' },
-    { name: 'Grace N.', avatar: 'G', action: 'passive income', amount: '+KES 54,200', time: '28 mins ago', crypto: 'LTC', color: 'bg-indigo-600' },
-    { name: 'Dennis T.', avatar: 'D', action: 'capital multiplied', amount: '+KES 89,100', time: '30 mins ago', crypto: 'USDT', color: 'bg-teal-600' },
-    { name: 'Kevin M.', avatar: 'K', action: 'automated profit', amount: '+KES 63,900', time: '32 mins ago', crypto: 'ETH', color: 'bg-blue-600' },
-    { name: 'Brian O.', avatar: 'B', action: 'salary replacement', amount: '+KES 39,000', time: '35 mins ago', crypto: 'BTC', color: 'bg-green-600' }
+    { name: 'Grace N.', avatar: 'G', action: 'earned daily profit', amount: '+KES 87,300', time: '', crypto: 'BTC', color: 'bg-green-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'completed smart mining', amount: '+KES 89,100', time: '', crypto: 'ETH', color: 'bg-blue-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'withdrew to M-Pesa', amount: '-KES 15,000', time: '', crypto: 'USDT', color: 'bg-orange-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'earned daily reward', amount: '+KES 30,000', time: '', crypto: 'BTC', color: 'bg-purple-600' },
+    { name: 'Grace N.', avatar: 'G', action: 'deposited via M-Pesa', amount: '+KES 20,000', time: '', crypto: 'ETH', color: 'bg-teal-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'earned 5x capital', amount: '+KES 89,100', time: '', crypto: 'LTC', color: 'bg-indigo-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'activated automated earnings', amount: '+KES 26,900', time: '', crypto: 'BTC', color: 'bg-green-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'completed mining cycle', amount: '+KES 12,700', time: '', crypto: 'ETH', color: 'bg-blue-600' },
+    { name: 'Grace N.', avatar: 'G', action: 'silent partner earnings', amount: '+KES 70,300', time: '', crypto: 'USDT', color: 'bg-yellow-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'smart income generated', amount: '+KES 59,100', time: '', crypto: 'BTC', color: 'bg-orange-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'morning withdrawal', amount: '-KES 65,000', time: '', crypto: 'ETH', color: 'bg-purple-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'daily earnings', amount: '+KES 84,000', time: '', crypto: 'BTC', color: 'bg-green-600' },
+    { name: 'Grace N.', avatar: 'G', action: 'passive income', amount: '+KES 54,200', time: '', crypto: 'LTC', color: 'bg-indigo-600' },
+    { name: 'Dennis T.', avatar: 'D', action: 'capital multiplied', amount: '+KES 89,100', time: '', crypto: 'USDT', color: 'bg-teal-600' },
+    { name: 'Kevin M.', avatar: 'K', action: 'automated profit', amount: '+KES 63,900', time: '', crypto: 'ETH', color: 'bg-blue-600' },
+    { name: 'Brian O.', avatar: 'B', action: 'salary replacement', amount: '+KES 39,000', time: '', crypto: 'BTC', color: 'bg-green-600' }
   ];
 
   // Get activities to display (simulated activities for better UX)
