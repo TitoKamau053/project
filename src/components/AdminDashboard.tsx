@@ -1106,7 +1106,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
                   <div className="grid grid-cols-6 gap-4 items-center">
                     <div>
                       <div className="font-medium text-white">{deposit.full_name || 'N/A'}</div>
-                      <div className="text-slate-400 text-sm">{deposit.email || `User ${deposit.user_id}`}</div>
+                      {/* <div className="text-slate-400 text-sm">{deposit.email || `User ${deposit.user_id}`}</div> */}
                     </div>
                     <div className="text-white font-semibold">
                       KES {deposit.amount.toLocaleString()}
@@ -1260,7 +1260,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
                   <div className="grid grid-cols-6 gap-4 items-center">
                     <div>
                       <div className="font-medium text-white">{withdrawal.full_name || 'N/A'}</div>
-                      <div className="text-slate-400 text-sm">{withdrawal.email || `User ${withdrawal.user_id}`}</div>
+                      {/* <div className="text-slate-400 text-sm">{withdrawal.email || `User ${withdrawal.user_id}`}</div> */}
                     </div>
                     <div className="text-white font-semibold">
                       KES {withdrawal.amount.toLocaleString()}
