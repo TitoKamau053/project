@@ -847,68 +847,71 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
     }
   };
 
-  const renderUserManagement = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-white text-2xl font-bold">User Management</h2>
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              className="bg-slate-700 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-          <select 
-            value={userStatusFilter}
-            onChange={(e) => setUserStatusFilter(e.target.value)}
-            className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="deactivated">Deactivated</option>
-          </select>
-          <select 
-            value={userRoleFilter}
-            onChange={(e) => setUserRoleFilter(e.target.value)}
-            className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-          >
-            <option value="">All Roles</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-          <button className="bg-slate-700 p-2 rounded-lg hover:bg-slate-600 transition-colors">
-            <Filter className="w-4 h-4 text-slate-400" />
-          </button>
+const renderUserManagement = () => (
+  <div className="space-y-6">
+    <div className="flex items-center justify-between">
+      <h2 className="text-white text-2xl font-bold">User Management</h2>
+      <div className="flex items-center space-x-3">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className="bg-slate-700 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
         </div>
+        <select
+          value={userStatusFilter}
+          onChange={(e) => setUserStatusFilter(e.target.value)}
+          className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="deactivated">Deactivated</option>
+        </select>
+        <select
+          value={userRoleFilter}
+          onChange={(e) => setUserRoleFilter(e.target.value)}
+          className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="">All Roles</option>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button className="bg-slate-700 p-2 rounded-lg hover:bg-slate-600 transition-colors">
+          <Filter className="w-4 h-4 text-slate-400" />
+        </button>
       </div>
+    </div>
 
-      <div className="bg-slate-800 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-slate-400 text-sm">
-              Showing {users.length} of {usersPagination.total} users (Page {usersPagination.page} of {usersPagination.pages})
-            </div>
-            <div className="flex items-center space-x-2">
-              <button 
-                disabled={usersPagination.page <= 1}
-                className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white px-3 py-1 rounded text-sm transition-colors"
-              >
-                Previous
-              </button>
-              <button 
-                disabled={usersPagination.page >= usersPagination.pages}
-                className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white px-3 py-1 rounded text-sm transition-colors"
-              >
-                Next
-              </button>
-            </div>
+    <div className="bg-slate-800 rounded-lg overflow-hidden">
+      <div className="p-4 border-b border-slate-700">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-slate-400 text-sm">
+            Showing {users.length} of {usersPagination.total} users (Page {usersPagination.page} of {usersPagination.pages})
           </div>
-          <div className="grid grid-cols-7 gap-4 text-slate-400 text-sm font-medium">
+          <div className="flex items-center space-x-2">
+            <button
+              disabled={usersPagination.page <= 1}
+              className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              Previous
+            </button>
+            <button
+              disabled={usersPagination.page >= usersPagination.pages}
+              className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-white px-3 py-1 rounded text-sm transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        {/* Header Grid */}
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-7 gap-4 min-w-[1000px] text-slate-400 text-sm font-medium px-4">
             <div>User</div>
             <div>Email</div>
             <div>Role</div>
@@ -918,88 +921,277 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
             <div>Actions</div>
           </div>
         </div>
-        
-        {sectionLoading ? (
-          <div className="p-8 text-center">
-            <div className="text-slate-400">Loading users...</div>
-          </div>
-        ) : users.length === 0 ? (
-          <div className="p-8 text-center">
-            <div className="text-slate-400">No users found</div>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-700">
-            {users.map((user) => (
-              <div key={user.id} className="p-4">
-                <div className="grid grid-cols-7 gap-4 items-center">
-                  <div>
-                    <div className="font-medium text-white">{user.full_name}</div>
-                    <div className="text-slate-400 text-sm">ID: {user.id}</div>
+      </div>
+
+      {/* User Data */}
+      {sectionLoading ? (
+        <div className="p-8 text-center">
+          <div className="text-slate-400">Loading users...</div>
+        </div>
+      ) : users.length === 0 ? (
+        <div className="p-8 text-center">
+          <div className="text-slate-400">No users found</div>
+        </div>
+      ) : (
+        <div className="divide-y divide-slate-700 overflow-x-auto">
+          {users.map((user) => (
+            <div key={user.id} className="p-4">
+              <div className="grid grid-cols-7 gap-4 items-center min-w-[1000px]">
+                <div>
+                  <div
+                    className="font-medium text-white truncate max-w-[160px]"
+                    title={user.full_name}
+                  >
+                    {user.full_name}
                   </div>
-                  <div className="text-slate-300">{user.email}</div>
-                  <div>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      user.role === 'admin' 
+                  <div className="text-slate-400 text-sm">ID: {user.id}</div>
+                </div>
+
+                {/* ✅ Truncated Email */}
+                <div
+                  className="text-slate-300 truncate max-w-[180px]"
+                  title={user.email}
+                >
+                  {user.email}
+                </div>
+
+                <div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
+                      user.role === 'admin'
                         ? 'bg-purple-500/20 text-purple-400'
                         : 'bg-blue-500/20 text-blue-400'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </div>
-                  <div>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
+                    }`}
+                  >
+                    {user.role}
+                  </span>
+                </div>
+
+                <div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${
                       user.status === 'active'
                         ? 'bg-green-500/20 text-green-400'
                         : user.status === 'suspended'
                         ? 'bg-yellow-500/20 text-yellow-400'
                         : 'bg-red-500/20 text-red-400'
-                    }`}>
-                      {user.status || 'active'}
-                    </span>
-                  </div>
-                  <div className="text-white font-medium">
-                    KES {(user.balance || 0).toLocaleString()}
-                  </div>
-                  <div className="text-slate-400 text-sm">
-                    {new Date(user.created_at).toLocaleDateString()}
-                  </div>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => handleViewUser(user)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                    }`}
+                  >
+                    {user.status || 'active'}
+                  </span>
+                </div>
+
+                <div className="text-white font-medium">
+                  KES {(user.balance || 0).toLocaleString()}
+                </div>
+
+                <div className="text-slate-400 text-sm">
+                  {new Date(user.created_at).toLocaleDateString()}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => handleViewUser(user)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleBalanceAdjustment(user.id)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                  >
+                    Balance
+                  </button>
+                  {user.status !== 'suspended' && (
+                    <button
+                      onClick={() => handleUserStatusUpdate(user.id, 'suspended')}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
                     >
-                      View
+                      Suspend
                     </button>
-                    <button 
-                      onClick={() => handleBalanceAdjustment(user.id)}
+                  )}
+                  {user.status !== 'deactivated' && (
+                    <button
+                      onClick={() => handleUserStatusUpdate(user.id, 'deactivated')}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                    >
+                      Deactivate
+                    </button>
+                  )}
+                  {(user.status === 'suspended' || user.status === 'deactivated') && (
+                    <button
+                      onClick={() => handleUserStatusUpdate(user.id, 'active')}
                       className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
                     >
-                      Balance
+                      Activate
                     </button>
-                    {user.status !== 'suspended' && (
-                      <button 
-                        onClick={() => handleUserStatusUpdate(user.id, 'suspended')}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                      >
-                        Suspend
-                      </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+
+const renderDepositManagement = () => {
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-slate-400">Loading deposit statistics...</div>
+      </div>
+    );
+  }
+
+  const safeToLocaleString = (value: number | undefined | null): string => {
+    return (value || 0).toLocaleString();
+  };
+
+  const safeNumber = (value: number | undefined | null): number => {
+    return value || 0;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-white text-2xl font-bold">Deposit Management</h2>
+        <div className="flex items-center space-x-3">
+          <select className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="bg-slate-800 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+              <Clock className="w-5 h-5 text-yellow-500" />
+            </div>
+            <div>
+              <p className="text-white font-semibold">{safeNumber(stats.pending_deposits)}</p>
+              <p className="text-slate-400 text-sm">Pending Deposits</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+            </div>
+            <div>
+              <p className="text-white font-semibold">KES {safeToLocaleString(stats.deposits_today)}</p>
+              <p className="text-slate-400 text-sm">Today's Deposits</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-white font-semibold">KES {safeToLocaleString(stats.total_deposits)}</p>
+              <p className="text-slate-400 text-sm">Total Deposits</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-slate-800 rounded-lg overflow-hidden">
+        <div className="p-4 border-b border-slate-700 overflow-x-auto">
+          <div className="grid grid-cols-6 gap-4 min-w-[900px] text-slate-400 text-sm font-medium">
+            <div>User</div>
+            <div>Amount</div>
+            <div>Method</div>
+            <div>Status</div>
+            <div>Date</div>
+            <div>Actions</div>
+          </div>
+        </div>
+
+        {sectionLoading ? (
+          <div className="p-8 text-center">
+            <div className="text-slate-400">Loading deposits...</div>
+          </div>
+        ) : deposits.length === 0 ? (
+          <div className="p-8 text-center">
+            <div className="text-slate-400">No deposits found</div>
+            <p className="text-xs mt-2">Deposits will appear here once users make transactions</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-700 overflow-x-auto">
+            {deposits.map((deposit) => (
+              <div key={deposit.id} className="p-4">
+                <div className="grid grid-cols-6 gap-4 items-center min-w-[900px]">
+                  {/* Truncated full name and email */}
+                  <div>
+                    <div
+                      className="font-medium text-white truncate max-w-[160px]"
+                      title={deposit.full_name || 'N/A'}
+                    >
+                      {deposit.full_name || 'N/A'}
+                    </div>
+                    <div
+                      className="text-slate-400 text-sm truncate max-w-[180px]"
+                      title={deposit.email || `User ${deposit.user_id}`}
+                    >
+                      {deposit.email || `User ${deposit.user_id}`}
+                    </div>
+                  </div>
+
+                  <div className="text-white font-semibold">
+                    KES {deposit.amount.toLocaleString()}
+                  </div>
+                  <div className="text-slate-300">{deposit.method || 'N/A'}</div>
+                  <div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        deposit.status === 'completed'
+                          ? 'bg-green-500/20 text-green-400'
+                          : deposit.status === 'pending'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {deposit.status}
+                    </span>
+                  </div>
+                  <div className="text-slate-400 text-sm">
+                    {new Date(deposit.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {deposit.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleApproveDeposit(deposit.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectDeposit(deposit.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </>
                     )}
-                    {user.status !== 'deactivated' && (
-                      <button 
-                        onClick={() => handleUserStatusUpdate(user.id, 'deactivated')}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                      >
-                        Deactivate
-                      </button>
-                    )}
-                    {(user.status === 'suspended' || user.status === 'deactivated') && (
-                      <button 
-                        onClick={() => handleUserStatusUpdate(user.id, 'active')}
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                      >
-                        Activate
-                      </button>
-                    )}
+                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                      View
+                    </button>
+                    <button
+                      onClick={() => handleDeleteDeposit(deposit.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1009,159 +1201,8 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
       </div>
     </div>
   );
+};
 
-  const renderDepositManagement = () => {
-    if (!stats) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-slate-400">Loading deposit statistics...</div>
-        </div>
-      );
-    }
-
-    // Helper functions for safe number formatting
-    const safeToLocaleString = (value: number | undefined | null): string => {
-      return (value || 0).toLocaleString();
-    };
-
-    const safeNumber = (value: number | undefined | null): number => {
-      return value || 0;
-    };
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-white text-2xl font-bold">Deposit Management</h2>
-          <div className="flex items-center space-x-3">
-            <select className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                <Clock className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">{safeNumber(stats.pending_deposits)}</p>
-                <p className="text-slate-400 text-sm">Pending Deposits</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">KES {safeToLocaleString(stats.deposits_today)}</p>
-                <p className="text-slate-400 text-sm">Today's Deposits</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-slate-800 rounded-lg p-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">KES {safeToLocaleString(stats.total_deposits)}</p>
-                <p className="text-slate-400 text-sm">Total Deposits</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-slate-800 rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-slate-700">
-            <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium">
-              <div>User</div>
-              <div>Amount</div>
-              <div>Method</div>
-              <div>Status</div>
-              <div>Date</div>
-              <div>Actions</div>
-            </div>
-          </div>
-          
-          {sectionLoading ? (
-            <div className="p-8 text-center">
-              <div className="text-slate-400">Loading deposits...</div>
-            </div>
-          ) : deposits.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="text-slate-400">No deposits found</div>
-              <p className="text-xs mt-2">Deposits will appear here once users make transactions</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-700">
-              {deposits.map((deposit) => (
-                <div key={deposit.id} className="p-4">
-                  <div className="grid grid-cols-6 gap-4 items-center">
-                    <div>
-                      <div className="font-medium text-white">{deposit.full_name || 'N/A'}</div>
-                      {/* <div className="text-slate-400 text-sm">{deposit.email || `User ${deposit.user_id}`}</div> */}
-                    </div>
-                    <div className="text-white font-semibold">
-                      KES {deposit.amount.toLocaleString()}
-                    </div>
-                    <div className="text-slate-300">{deposit.method || 'N/A'}</div>
-                    <div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        deposit.status === 'completed' 
-                          ? 'bg-green-500/20 text-green-400'
-                          : deposit.status === 'pending'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}>
-                        {deposit.status}
-                      </span>
-                    </div>
-                    <div className="text-slate-400 text-sm">
-                      {new Date(deposit.created_at).toLocaleDateString()}
-                    </div>
-                    <div className="flex space-x-2">
-                      {deposit.status === 'pending' && (
-                        <>
-                          <button 
-                            onClick={() => handleApproveDeposit(deposit.id)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button 
-                            onClick={() => handleRejectDeposit(deposit.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                        View
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteDeposit(deposit.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   const renderWithdrawalManagement = () => {
     if (!stats) {
