@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Toast } from './Toast';
 import { Zap, Clock } from 'lucide-react';
 import { miningAPI, purchaseAPI, userAPI } from '../utils/api';
 import { getAndClearScrollFlag } from '../utils/scrollUtils';
@@ -28,6 +29,8 @@ export const Stake = () => {
   const purchaseSectionRef = useRef<HTMLDivElement>(null);
   const [engineDetails, setEngineDetails] = useState<MiningEngine | null>(null);
   const [purchaseFeedback, setPurchaseFeedback] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const profitEnginesRef = useRef<HTMLDivElement>(null);
 
   // Define scrollToProfitEngines function with useCallback
@@ -189,6 +192,9 @@ export const Stake = () => {
       // Refresh balance after successful purchase
       const profileResponse = await userAPI.getProfile();
       setBalance(profileResponse.user.balance || '0.00');
+      const msg = `You have successfully activated ${engineDetails.name} of KSh ${purchaseAmount}`;
+      setToastMessage(msg);
+      setShowToast(true);
       setPurchaseFeedback('Mining engine purchased successfully!');
       setShowPurchaseSection(false);
     } catch (err) {
@@ -200,6 +206,14 @@ export const Stake = () => {
 
   return (
     <div className="p-4 space-y-6 max-w-full overflow-x-hidden">
+      {showToast && (
+        <Toast
+          message={toastMessage}
+          type="success"
+          duration={5000}
+          onClose={() => setShowToast(false)}
+        />
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <div>
