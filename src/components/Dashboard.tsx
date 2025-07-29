@@ -160,7 +160,7 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
           </div>
           <div className="flex items-center space-x-1">
             <Users className="w-4 h-4" />
-            <span>103,357 people joined</span>
+            <span>100,000+ people joined</span>
           </div>
         </div>
         <button 

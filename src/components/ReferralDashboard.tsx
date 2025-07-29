@@ -280,7 +280,7 @@ export const ReferralDashboard = () => {
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 text-sm">Average per Referral</span>
                 <span className="text-white font-medium">
-                  KES {Number(referralStats?.avg_commission_per_referral || 0).toFixed(2)}
+                  KES {referralStats?.avg_commission_per_referral ?? 0}
                 </span>
               </div>
             </div>

@@ -158,7 +158,19 @@ export const Stake = () => {
   // Fetch engine details (with min/max investment) when user clicks purchase
   const handleShowPurchase = async (engineId: number) => {
     setPurchaseFeedback(null);
-    setPurchaseAmount('');
+    // Set purchase amount to the engine's minimum investment (or price) by default
+    let minAmount = '';
+    try {
+      setPurchaseLoading(true);
+      const details = await miningAPI.getEngineById(engineId);
+      minAmount = (details.min_investment || details.price || '').toString();
+      setEngineDetails(details);
+    } catch (err) {
+      setPurchaseFeedback(err instanceof Error ? err.message : 'Failed to load engine details');
+    } finally {
+      setPurchaseLoading(false);
+    }
+    setPurchaseAmount(minAmount);
     setShowPurchaseSection(true);
     setEngineDetails(null);
     try {
@@ -386,15 +398,15 @@ export const Stake = () => {
               </div>
               <div>
                 <label className="block text-slate-400 text-sm font-medium mb-1">Minimum Amount</label>
-                <input type="text" value={`KSh ${engineDetails.min_investment || engineDetails.price}`} readOnly className="w-full bg-slate-700 text-white px-3 py-2 rounded" />
+                <input type="text" value={`KSh ${engineDetails.min_investment && engineDetails.min_investment > 0 ? engineDetails.min_investment : engineDetails.price}`} readOnly className="w-full bg-slate-700 text-white px-3 py-2 rounded" />
               </div>
             </div>
             <div>
               <label className="block text-slate-400 text-sm font-medium mb-1">Engine Amount (KSh)</label>
               <input
                 type="number"
-                min={engineDetails.min_investment || engineDetails.price}
-                max={engineDetails.max_investment || ''}
+                min={engineDetails.min_investment && engineDetails.min_investment > 0 ? engineDetails.min_investment : engineDetails.price}
+                max={engineDetails.max_investment ?? ''}
                 step="0.01"
                 value={purchaseAmount}
                 onChange={e => setPurchaseAmount(e.target.value)}
@@ -402,7 +414,7 @@ export const Stake = () => {
                 required
               />
               <div className="text-slate-400 text-xs mt-1">
-                Min: <span className="text-white font-bold">KES {engineDetails.min_investment || engineDetails.price}</span>
+                Min: <span className="text-white font-bold">KES {engineDetails.min_investment && engineDetails.min_investment > 0 ? engineDetails.min_investment : engineDetails.price}</span>
                 {engineDetails.max_investment && (
                   <>
                     {" | "}Max: <span className="text-white font-bold">KES {engineDetails.max_investment}</span>
@@ -439,7 +451,7 @@ export const Stake = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-slate-800 rounded p-4 text-center">
                 <div className="text-slate-400 text-sm mb-1">You Invest</div>
-                <div className="text-2xl text-white font-bold">KSh {purchaseAmount || '0.00'}</div>
+                <div className="text-2xl text-white font-bold">KSh {purchaseAmount || (engineDetails.min_investment ?? engineDetails.price)}</div>
               </div>
               <div className="bg-slate-800 rounded p-4 text-center">
                 <div className="text-slate-400 text-sm mb-1">You Earn</div>
