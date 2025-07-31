@@ -44,13 +44,26 @@ export const WhatsAppFloatingButton: React.FC = () => {
   const touchMoved = useRef(false);
 
   const onTouchStart = (e: React.TouchEvent) => {
-    // Do not preventDefault here to allow click events if no drag
+    // Do NOT call preventDefault here to allow click events on mobile
     setDragging(true);
     touchMoved.current = false;
     const touch = e.touches[0];
     dragStartPos.current = position;
     dragStartMousePos.current = { x: touch.clientX, y: touch.clientY };
   };
+
+  // Prevent scrolling while dragging
+  useEffect(() => {
+    const preventScroll = (e: TouchEvent) => {
+      if (dragging) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    return () => {
+      window.removeEventListener('touchmove', preventScroll);
+    };
+  }, [dragging]);
 
   const onMouseMove = (e: MouseEvent) => {
     if (!dragging) return;
@@ -98,17 +111,13 @@ export const WhatsAppFloatingButton: React.FC = () => {
 
   const onTouchEnd = (e: TouchEvent) => {
     if (dragging) {
-      e.preventDefault();
+      // Do not preventDefault here to allow click event
       setDragging(false);
     }
   };
 
   const onClick = (e: React.MouseEvent | React.TouchEvent) => {
-    // If touch moved, prevent click to avoid triggering link on drag
-    if (touchMoved.current) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    // Allow all clicks, no prevention
   };
 
   useEffect(() => {
