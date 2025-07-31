@@ -18,7 +18,7 @@ import {
   Clock,
   AlertTriangle
 } from 'lucide-react';
-import { apiAuthFetch} from '../utils/api';
+import { apiAuthFetch, miningAPI } from '../utils/api';
 
 
 interface User {
@@ -85,15 +85,23 @@ interface MiningEngine {
   price: number;
   daily_earning_rate: number;
   duration_days: number;
+  duration_hours?: number; // Add duration_hours for hourly interval
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  earning_interval?: 'hourly' | 'daily'; // Add this missing property
 }
 
 interface AdminDashboardProps {
   user: User | null;
   onLogout: () => void;
 }
+
+const safeRender = (value: any): string => {
+  if (value === null || value === undefined) return 'N/A';
+  if (typeof value === 'number') return value.toLocaleString();
+  return String(value);
+};
 
 export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -507,6 +515,29 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
   const [miningEngines, setMiningEngines] = useState<MiningEngine[]>([]);
   const [showEngineModal, setShowEngineModal] = useState(false);
   const [editingEngine, setEditingEngine] = useState<MiningEngine | null>(null);
+  const [engineInterval, setEngineInterval] = useState<'hourly' | 'daily'>('daily');
+  const [durationHours, setDurationHours] = useState<number>(0);
+
+  // Set engineInterval and durationHours when modal opens or editingEngine changes
+  useEffect(() => {
+    if (showEngineModal) {
+      if (editingEngine) {
+        if (editingEngine.earning_interval) {
+          setEngineInterval(editingEngine.earning_interval as 'hourly' | 'daily');
+        } else {
+          setEngineInterval('daily');
+        }
+        if (editingEngine.earning_interval === 'hourly' && editingEngine.duration_hours !== undefined) {
+          setDurationHours(editingEngine.duration_hours);
+        } else {
+          setDurationHours(0);
+        }
+      } else {
+        setEngineInterval('daily');
+        setDurationHours(0);
+      }
+    }
+  }, [showEngineModal, editingEngine]);
   
   // System settings state and functions
   const [systemSettings, setSystemSettings] = useState({
@@ -630,7 +661,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
 
   const fetchMiningEngines = async () => {
     try {
-      const response = await apiAuthFetch('/mining-engines');
+      const response = await miningAPI.getEngines();
       if (response && Array.isArray(response)) {
         setMiningEngines(response);
       } else if (response && response.engines) {
@@ -643,10 +674,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
 
   const handleCreateEngine = async (engineData: Omit<MiningEngine, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      await apiAuthFetch('/admin/mining-engines', {
-        method: 'POST',
-        body: engineData
-      });
+      await miningAPI.addEngine(engineData);
       await fetchMiningEngines();
       setShowEngineModal(false);
       alert('Mining engine created successfully!');
@@ -658,10 +686,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
 
   const handleUpdateEngine = async (engineId: number, engineData: Partial<MiningEngine>) => {
     try {
-      await apiAuthFetch(`/admin/mining-engines/${engineId}`, {
-        method: 'PUT',
-        body: engineData
-      });
+      await miningAPI.updateEngine(engineId, engineData);
       await fetchMiningEngines();
       setShowEngineModal(false);
       setEditingEngine(null);
@@ -676,10 +701,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
     try {
       const confirmed = confirm('Are you sure you want to delete this mining engine? This action cannot be undone.');
       if (!confirmed) return;
-
-      await apiAuthFetch(`/admin/mining-engines/${engineId}`, {
-        method: 'DELETE'
-      });
+      await miningAPI.deleteEngine(engineId);
       await fetchMiningEngines();
       alert('Mining engine deleted successfully!');
     } catch (err) {
@@ -696,6 +718,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
     { id: 'mining', label: 'Mining Engines', icon: TrendingUp },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'logs', label: 'Activity Logs', icon: FileText },
+    { id: 'earnings', label: 'Earnings', icon: DollarSign },
   ];
 
   const renderOverview = () => {
@@ -851,6 +874,166 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
     );
   };
 
+  // Earnings state
+  const [earnings, setEarnings] = useState<any[]>([]);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+  const [earningsError, setEarningsError] = useState<string | null>(null);
+  const [processingEarning, setProcessingEarning] = useState(false);
+  const [manualEarningAmount, setManualEarningAmount] = useState('');
+  const [manualEarningUser, setManualEarningUser] = useState('');
+  const [manualEarningEngine, setManualEarningEngine] = useState('');
+  const [manualEarningInterval, setManualEarningInterval] = useState('daily');
+  const [manualEarningMessage, setManualEarningMessage] = useState<string | null>(null);
+
+  // Fetch earnings when tab is active
+  useEffect(() => {
+    if (activeTab !== 'earnings') return;
+    const fetchEarnings = async () => {
+      setEarningsLoading(true);
+      setEarningsError(null);
+      try {
+        const res = await apiAuthFetch('/earnings/admin/earnings');
+        setEarnings(res.earnings || []);
+      } catch (err: any) {
+        setEarningsError(err?.message || 'Failed to load earnings log');
+      } finally {
+        setEarningsLoading(false);
+      }
+    };
+    fetchEarnings();
+  }, [activeTab]);
+
+  // Manual earning processing handler
+  const handleManualEarning = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessingEarning(true);
+    setManualEarningMessage(null);
+    try {
+      if (!manualEarningUser || !manualEarningEngine || !manualEarningAmount) {
+        setManualEarningMessage('All fields are required.');
+        setProcessingEarning(false);
+        return;
+      }
+      const payload = {
+        user_id: manualEarningUser,
+        engine_id: manualEarningEngine,
+        amount: parseFloat(manualEarningAmount),
+        interval: manualEarningInterval,
+      };
+      await apiAuthFetch('/admin/earnings/process', { method: 'POST', body: payload });
+      setManualEarningMessage('Earning processed successfully!');
+      setManualEarningAmount('');
+      setManualEarningUser('');
+      setManualEarningEngine('');
+      setManualEarningInterval('daily');
+      // Refresh earnings log
+      const res = await apiAuthFetch('/earnings/admin/earnings');
+      setEarnings(res.earnings || []);
+    } catch (err: any) {
+      setManualEarningMessage(err?.message || 'Failed to process earning.');
+    } finally {
+      setProcessingEarning(false);
+    }
+  };
+
+  // Render admin earnings management
+  const renderEarningsManagement = () => {
+    try {
+      return (
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-white text-2xl font-bold mb-4">Manual Earnings Processing</h2>
+            <form onSubmit={handleManualEarning} className="bg-slate-800 rounded-lg p-6 space-y-4 max-w-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-400 text-sm mb-1">User ID</label>
+                  <input type="text" className="w-full bg-slate-700 text-white px-3 py-2 rounded" value={manualEarningUser} onChange={e => setManualEarningUser(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm mb-1">Engine ID</label>
+                  <input type="text" className="w-full bg-slate-700 text-white px-3 py-2 rounded" value={manualEarningEngine} onChange={e => setManualEarningEngine(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm mb-1">Amount (KES)</label>
+                  <input type="number" step="0.01" className="w-full bg-slate-700 text-white px-3 py-2 rounded" value={manualEarningAmount} onChange={e => setManualEarningAmount(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm mb-1">Interval</label>
+                  <select className="w-full bg-slate-700 text-white px-3 py-2 rounded" value={manualEarningInterval} onChange={e => setManualEarningInterval(e.target.value)} required>
+                    <option value="daily">Daily</option>
+                    <option value="hourly">Hourly</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button type="submit" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded transition-colors" disabled={processingEarning}>
+                  {processingEarning ? 'Processing...' : 'Process Earning'}
+                </button>
+                {manualEarningMessage && (
+                  <span className={manualEarningMessage.includes('success') ? 'text-green-400' : 'text-red-400'}>{manualEarningMessage}</span>
+                )}
+              </div>
+            </form>
+          </div>
+          <div>
+            <h2 className="text-white text-2xl font-bold mb-4">Earnings Log</h2>
+            {earningsLoading ? (
+              <div className="text-slate-400">Loading earnings log...</div>
+            ) : earningsError ? (
+              <div className="text-red-400">{earningsError}</div>
+            ) : earnings.length === 0 ? (
+              <div className="text-slate-400">No earnings records found.</div>
+            ) : (
+              <div className="bg-slate-800 rounded-lg overflow-x-auto">
+                <div className="p-4 border-b border-slate-700">
+                <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium min-w-[1100px]">
+                  <div>Earning ID</div>
+                  <div>User</div>
+                  <div>Amount</div>
+                  <div>Interval</div>
+                  <div>Date/Time</div>
+                  <div>Status</div>
+                </div>
+                </div>
+                <div className="divide-y divide-slate-700">
+              {earnings.map((earning: any) => {
+                const user = users.find(u => u.id === earning.user_id);
+                // const engine = miningEngines.find(e => e.id === earning.engine_id);
+                return (
+                  <div key={safeRender(earning.id)} className="p-4 grid grid-cols-6 gap-4 items-center min-w-[1100px]">
+                    <div>{safeRender(earning.id)}</div>
+                    <div>{user ? user.full_name : `User ID: ${safeRender(earning.user_id)}`}</div>
+                    <div>
+                      KES {safeRender(
+                        earning.amount !== undefined
+                          ? earning.amount
+                          : earning.earning_amount !== undefined
+                            ? earning.earning_amount
+                            : 0
+                      )}
+                    </div>
+                    <div>{safeRender(earning.interval || earning.earning_interval || '-')}</div>
+                    <div>{safeRender(earning.earning_datetime ? new Date(earning.earning_datetime).toLocaleString() : '')}</div>
+                    <div>{safeRender(earning.status || 'Processed')}</div>
+                  </div>
+                );
+              })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    } catch (error) {
+      console.error('Error rendering earnings management:', error);
+      return (
+        <div className="text-red-400 p-4">
+          Error loading earnings management. Please refresh the page.
+        </div>
+      );
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -863,6 +1046,8 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
         return renderWithdrawalManagement();
       case 'mining':
         return renderMiningEngineManagement();
+      case 'earnings':
+        return renderEarningsManagement();
       case 'settings':
         return renderSystemSettings();
       case 'logs':
@@ -1500,7 +1685,11 @@ const renderDepositManagement = () => {
                       KES {engine.price.toLocaleString()}
                     </div>
                     <div className="text-slate-300">{engine.daily_earning_rate}%</div>
-                    <div className="text-slate-300">{engine.duration_days} days</div>
+                    <div className="text-slate-300">
+                      {engine.earning_interval === 'hourly' 
+                        ? `${(engine as any).duration_hours || 0} hours` 
+                        : `${engine.duration_days} days`}
+                    </div>
                     <div>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         engine.is_active 
@@ -1554,18 +1743,25 @@ const renderDepositManagement = () => {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const engineData = {
-                  name: formData.get('name') as string,
-                  price: parseFloat(formData.get('price') as string),
-                  daily_earning_rate: parseFloat(formData.get('daily_earning_rate') as string),
-                  duration_days: parseInt(formData.get('duration_days') as string),
-                  is_active: formData.get('is_active') === 'on'
-                };
+                  const engineData = {
+                    name: formData.get('name') as string,
+                    price: parseFloat(formData.get('price') as string),
+                    daily_earning_rate: parseFloat(formData.get('daily_earning_rate') as string),
+                    duration_days: engineInterval === 'daily' ? parseInt(formData.get('duration_days') as string) : 0,
+                    duration_hours: engineInterval === 'hourly' ? durationHours : 0,
+                    // Use engineInterval state instead of formData value
+                    earning_interval: engineInterval,
+                    is_active: formData.get('is_active') === 'on'
+                  };
                 
                 if (editingEngine) {
                   handleUpdateEngine(editingEngine.id, engineData);
                 } else {
-                  handleCreateEngine(engineData);
+                  // Pass earning_interval explicitly from engineInterval state
+                  handleCreateEngine({
+                    ...engineData,
+                    earning_interval: engineInterval
+                  });
                 }
               }}>
                 <div className="space-y-4">
@@ -1608,8 +1804,35 @@ const renderDepositManagement = () => {
                       name="duration_days"
                       defaultValue={editingEngine?.duration_days || ''}
                       className="w-full bg-slate-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500" 
-                      required 
+                      required={engineInterval === 'daily'}
+                      disabled={engineInterval === 'hourly'}
                     />
+                  </div>
+                  {engineInterval === 'hourly' && (
+                    <div>
+                      <label className="block text-slate-400 text-sm font-medium mb-1">Duration (Hours)</label>
+                      <input
+                        type="number"
+                        name="duration_hours"
+                        value={durationHours}
+                        onChange={e => setDurationHours(parseInt(e.target.value) || 0)}
+                        className="w-full bg-slate-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        required
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-slate-400 text-sm font-medium mb-1">Earning Interval</label>
+                    <select
+                      name="earning_interval"
+                      value={engineInterval}
+                      onChange={e => setEngineInterval(e.target.value)}
+                      className="w-full bg-slate-700 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      required
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="hourly">Hourly</option>
+                    </select>
                   </div>
                   <div className="flex items-center">
                     <input 
@@ -1627,6 +1850,7 @@ const renderDepositManagement = () => {
                     onClick={() => {
                       setShowEngineModal(false);
                       setEditingEngine(null);
+                      setEngineInterval('daily');
                     }}
                     className="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded transition-colors"
                   >

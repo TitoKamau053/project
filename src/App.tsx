@@ -6,17 +6,20 @@ import { Earnings } from './components/Earnings';
 import { Network } from './components/Network';
 import { Navigation } from './components/Navigation';
 import { Header } from './components/Header';
-import { Login } from './components/Login';
-import { Signup } from './components/Signup';
-import { Profile } from './components/Profile';
-import { Support } from './components/Support';
-import { AdminDashboard } from './components/AdminDashboard';
-import { TransactionHistory } from './components/TransactionHistory';
-import { About } from './components/About';
-import { Homepage } from './components/Homepage';
-import { TermsOfService } from './components/TermsOfService';
+import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { userAPI } from './utils/api';
 import { setScrollFlag } from './utils/scrollUtils';
+import { Homepage } from './components/Homepage';
+import { TermsOfService } from './components/TermsOfService';
+import { About } from './components/About';
+import { Signup } from './components/Signup';
+import { Login } from './components/Login';
+import { AdminDashboard } from './components/AdminDashboard';
+import { Profile } from './components/Profile';
+import { Support } from './components/Support';
+import { TransactionHistory } from './components/TransactionHistory';
+
+
 
 interface User {
   id: number;
@@ -309,22 +312,23 @@ function AppContent() {
       }
     };
 
-    return (
-      <div className="min-h-screen bg-slate-900 text-white">
-        <Header 
-          onLogout={handleLogout}
-          onProfileClick={() => setCurrentView('profile')}
-        />
-        <main className="pb-20">
-          {renderContent()}
-        </main>
-        <Navigation 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab}
-          onSupportClick={() => setCurrentView('support')}
-        />
-      </div>
-    );
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      <Header 
+        onLogout={handleLogout}
+        onProfileClick={() => setCurrentView('profile')}
+      />
+      <main className="pb-20">
+        {renderContent()}
+      </main>
+      <Navigation 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        onSupportClick={() => setCurrentView('support')}
+      />
+      <WhatsAppFloatingButton />
+    </div>
+  );
   }
 
   // If admin user somehow gets to 'app' view, redirect to admin

@@ -207,21 +207,67 @@ export const userAPI = {
   },
 };
 
-// Mining Engines
+// Mining Engines (Enhanced)
 export const miningAPI = {
-  getEngines: async () => {
-    return apiFetch('/mining-engines');
+  // Public endpoints
+  getEngines: async (params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiFetch(`/mining-engines${query ? `?${query}` : ''}`);
+  },
+  getEngineById: async (engineId: any, params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiFetch(`/mining-engines/${engineId}${query ? `?${query}` : ''}`);
   },
 
-  getEngineById: async (engineId: number) => {
-    return apiFetch(`/mining-engines/${engineId}`);
-  },
-
-  addEngine: async (engineData: object) => {
+  // Admin endpoints
+  addEngine: async (engineData: any) => {
     return apiAuthFetch('/mining-engines', {
       method: 'POST',
       body: engineData,
     });
+  },
+  updateEngine: async (engineId: any, updateData: any) => {
+    return apiAuthFetch(`/mining-engines/${engineId}`, {
+      method: 'PUT',
+      body: updateData,
+    });
+  },
+  deleteEngine: async (engineId: any, params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiAuthFetch(`/mining-engines/${engineId}${query ? `?${query}` : ''}`, {
+      method: 'DELETE',
+    });
+  },
+  testConfig: async (configData: any) => {
+    return apiAuthFetch('/mining-engines/test/config', {
+      method: 'POST',
+      body: configData,
+    });
+  },
+  simulateEngine: async (engineId: any, data: any) => {
+    return apiAuthFetch(`/mining-engines/${engineId}/simulate`, {
+      method: 'POST',
+      body: data,
+    });
+  },
+  getEngineAnalytics: async (engineId: any, params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiAuthFetch(`/mining-engines/${engineId}/analytics${query ? `?${query}` : ''}`);
+  },
+  batchOperations: async (data: any) => {
+    return apiAuthFetch('/mining-engines/batch/operations', {
+      method: 'POST',
+      body: data,
+    });
+  },
+  compareEngines: async (data: any) => {
+    return apiAuthFetch('/mining-engines/compare', {
+      method: 'POST',
+      body: data,
+    });
+  },
+  getEngineHealth: async (engineId: any) => {
+    return apiAuthFetch(`/mining-engines/${engineId}/health`);
   },
 };
 
@@ -286,17 +332,59 @@ export const purchaseAPI = {
   },
 };
 
-// Earnings
+// Earnings (Enhanced)
 export const earningsAPI = {
-  log: async (earningData: { purchase_id: number; earning_amount: number }) => {
+  // User endpoints
+  getUserEarnings: async (params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiAuthFetch(`/earnings${query ? `?${query}` : ''}`);
+  },
+  getEarningsSummary: async () => {
+    return apiAuthFetch('/earnings/summary');
+  },
+
+  // Admin endpoints
+  getAdminEarnings: async (params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiAuthFetch(`/earnings/admin/earnings${query ? `?${query}` : ''}`);
+  },
+  getEarningsStats: async (params = {}) => {
+    const query = new URLSearchParams(params as any).toString();
+    return apiAuthFetch(`/earnings/admin/stats${query ? `?${query}` : ''}`);
+  },
+  log: async (earningData: any) => {
     return apiAuthFetch('/earnings/log', {
       method: 'POST',
       body: earningData,
     });
   },
+  triggerManual: async (purchaseId: any) => {
+    return apiAuthFetch(`/earnings/trigger/${purchaseId}`, {
+      method: 'POST',
+    });
+  },
 
-  getUserEarnings: async () => {
-    return apiAuthFetch('/earnings');
+  // Debugging endpoints
+  getPurchaseDebug: async (purchaseId: any) => {
+    return apiAuthFetch(`/earnings/debug/purchase/${purchaseId}`);
+  },
+  getSystemHealth: async () => {
+    return apiAuthFetch('/earnings/debug/health');
+  },
+  testProcessing: async (data: any) => {
+    return apiAuthFetch('/earnings/debug/test-processing', {
+      method: 'POST',
+      body: data,
+    });
+  },
+  getQueueStatus: async () => {
+    return apiAuthFetch('/earnings/debug/queue-status');
+  },
+  simulateEarnings: async (data: any) => {
+    return apiAuthFetch('/earnings/debug/simulate', {
+      method: 'POST',
+      body: data,
+    });
   },
 };
 

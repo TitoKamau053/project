@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
+
 import { Plus, ArrowUp, Users, Zap, TrendingUp, X, CreditCard, Pickaxe, HelpCircle, Info } from 'lucide-react';
 import TradingViewWidget from './TradingViewWidget';
 import { LivePrices } from './LivePrices';
 import { DepositModal } from './DepositModal';
 import { WithdrawModal } from './WithdrawModal';
 import { CryptoIcon } from './CryptoIcon';
-import { userAPI, purchaseAPI } from '../utils/api';
+
+import { userAPI, purchaseAPI, earningsAPI, miningAPI } from '../utils/api';
+import { sanitize, safeRender } from '../utils/sanitize';
 
 interface Activity {
   name: string;
@@ -26,12 +29,32 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPackages, onShowHelpline, onShowAbout }: DashboardProps) => {
+  // Earnings tab state
+
+  interface EarningLog {
+    id: number;
+    engine_name: string;
+    interval: string;
+    amount: number;
+    earning_datetime: string;
+    status: string;
+  }
+  const [earningsSummary, setEarningsSummary] = useState<EarningsSummary | null>(null);
+  const [earnings, setEarnings] = useState<EarningLog[]>([]);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+  const [earningsError, setEarningsError] = useState<string | null>(null);
+  const [earningsPage, setEarningsPage] = useState(1);
+  const [earningsTotalPages, setEarningsTotalPages] = useState(1);
+  const [earningsFilters] = useState({ engine: '', purchase: '', dateFrom: '', dateTo: '' });
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'earnings'>('dashboard');
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
   const [balance, setBalance] = useState('0.00');
   const [totalProfit, setTotalProfit] = useState('0.00');
   const [activeMiners, setActiveMiners] = useState(0);
+  const [activeEngines, setActiveEngines] = useState<any[]>([]);
+  const [completedEngines, setCompletedEngines] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [simulatedVolume, setSimulatedVolume] = useState(30.88);
 
@@ -98,30 +121,64 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
       try {
         // Fetch user profile data
         const profileData = await userAPI.getProfile();
-        setBalance(profileData.user.balance || '0.00');
-        setTotalProfit(profileData.user.total_earnings || '0.00');
-        
-        // Fetch user purchases to count active miners
+        setBalance(sanitize(profileData.user.balance || '0.00'));
+        setTotalProfit(sanitize(profileData.user.total_earnings || '0.00'));
+        // Fetch user purchases to count active and completed miners
         try {
           const purchasesData = await purchaseAPI.getUserPurchases();
-          const activePurchases = purchasesData.purchases.filter((p: { status: string }) => p.status === 'active');
-          setActiveMiners(activePurchases.length);
+          // Sanitize each purchase object
+          const activePurchases = purchasesData.purchases.filter((p: { status: string }) => p.status === 'active').map(sanitize);
+          const completedPurchases = purchasesData.purchases.filter((p: { status: string }) => p.status === 'completed').map(sanitize);
+          setActiveMiners(sanitize(activePurchases.length));
+          setActiveEngines(activePurchases);
+          setCompletedEngines(completedPurchases);
         } catch {
-          // If purchases endpoint fails, just set to 0
           setActiveMiners(0);
+          setActiveEngines([]);
+          setCompletedEngines([]);
         }
-
-        // We're using simulated activities, no need to fetch from API
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Error fetching dashboard data');
-        }
+        setError(err instanceof Error ? err.message : 'Error fetching dashboard data');
       }
     };
     fetchDashboardData();
   }, []);
+
+  // Fetch earnings summary and logs when earnings tab is active (using new API)
+  useEffect(() => {
+    if (activeTab !== 'earnings') return;
+    setEarningsLoading(true);
+    setEarningsError(null);
+    Promise.all([
+      earningsAPI.getEarningsSummary(),
+      earningsAPI.getUserEarnings({
+        page: earningsPage,
+        engine_id: earningsFilters.engine,
+        purchase_id: earningsFilters.purchase,
+        start_date: earningsFilters.dateFrom,
+        end_date: earningsFilters.dateTo
+      })
+    ]).then(([summary, earningsRes]) => {
+      setEarningsSummary(sanitize(summary));
+          let sanitizedEarnings = earningsRes.earnings || [];
+          if (!Array.isArray(sanitizedEarnings)) {
+            sanitizedEarnings = [];
+          } else {
+            sanitizedEarnings = sanitizedEarnings.map(sanitize);
+          }
+          setEarnings(sanitizedEarnings);
+      setEarningsTotalPages(sanitize(earningsRes.totalPages || 1));
+    }).catch(e => {
+      setEarningsError('Failed to load earnings data');
+    }).finally(() => setEarningsLoading(false));
+  }, [activeTab, earningsPage, earningsFilters]);
+
+  // (Optional) Add hooks for engine analytics/simulation for future expansion
+  // Example:
+  // const [engineAnalytics, setEngineAnalytics] = useState(null);
+  // useEffect(() => {
+  //   miningAPI.getEngineAnalytics(engineId, { period: '30d' }).then(setEngineAnalytics);
+  // }, [engineId]);
 
   const handleDepositClick = () => {
     setShowDepositModal(true);
@@ -131,15 +188,22 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
     setShowWithdrawModal(true);
   };
 
+
+
+
   return (
     <div className="p-4 space-y-6 max-w-full overflow-x-hidden">
-      
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-600 text-white p-3 rounded-lg text-center">
-          {error}
-        </div>
-      )}
+      <div className="mb-4 flex space-x-2">
+        <button className={`px-4 py-2 rounded ${activeTab==='dashboard'?'bg-orange-500 text-white':'bg-slate-700 text-slate-200'}`} onClick={()=>setActiveTab('dashboard')}>Dashboard</button>
+        <button className={`px-4 py-2 rounded ${activeTab==='earnings'?'bg-orange-500 text-white':'bg-slate-700 text-slate-200'}`} onClick={()=>setActiveTab('earnings')}>Earnings</button>
+      </div>
+      {activeTab === 'dashboard' && <>
+        {/* Error Message */}
+        {error ? (
+          <div className="bg-red-600 text-white p-3 rounded-lg text-center">
+            {error}
+          </div>
+        ) : null}
       
       {/* Promotional Banner */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 relative overflow-hidden">
@@ -233,18 +297,91 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
         <div className="bg-slate-800 rounded-lg p-3 sm:p-4">
           <div className="flex items-center space-x-2 mb-2">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
-            <span className="text-slate-400 text-xs sm:text-sm">Today's Profit</span>
+            <span className="text-slate-400 text-xs sm:text-sm">Available Mining Rewards</span>
           </div>
           <p className="text-white text-base sm:text-lg font-bold break-words">KES {totalProfit}</p>
         </div>
         <div className="bg-slate-800 rounded-lg p-3 sm:p-4">
           <div className="flex items-center space-x-2 mb-2">
             <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
-            <span className="text-slate-400 text-xs sm:text-sm">My Active Mines</span>
+            <span className="text-slate-400 text-xs sm:text-sm">My Active Engines</span>
           </div>
           <p className="text-white text-base sm:text-lg font-bold">{activeMiners}</p>
+          {activeEngines.length > 0 && (
+            <div className="mt-2">
+              <div className="text-slate-400 text-xs mb-1">Active</div>
+              <ul className="space-y-1">
+                {activeEngines.map((engine) => (
+                  <li key={safeRender(engine.id)} className="text-white text-xs bg-slate-700 rounded px-2 py-1 flex justify-between items-center">
+                    <span>{safeRender(engine.engine_name || engine.name)}</span>
+                    <span className="text-green-400">Active</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {completedEngines.length > 0 && (
+            <div className="mt-4">
+              <div className="text-slate-400 text-xs mb-1">Completed</div>
+              <ul className="space-y-1">
+                {completedEngines.map((engine) => (
+                  <li key={safeRender(engine.id)} className="text-white text-xs bg-slate-700 rounded px-2 py-1 flex justify-between items-center">
+                    <div>{safeRender(engine.interval ?? engine.earning_interval ?? '-')}</div>
+                    <span className="text-orange-400">Completed</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
+      </>}
+      {activeTab === 'earnings' && (
+        <div className="space-y-6">
+          <h2 className="text-white text-2xl font-bold">Earnings History</h2>
+          <div className="bg-slate-800 rounded-lg overflow-x-auto">
+            <div className="p-4 border-b border-slate-700">
+              <div className="grid grid-cols-6 gap-4 text-slate-400 text-sm font-medium min-w-[900px]">
+                <div>Earning ID</div>
+                <div>Engine</div>
+                <div>Interval</div>
+                <div>Amount</div>
+                <div>Date/Time</div>
+                <div>Status</div>
+              </div>
+            </div>
+            <div className="divide-y divide-slate-700">
+              {earnings.map((earning, idx) => {
+                // Defensive: If any field is an object, stringify it to avoid React error
+                return (
+                  <div key={safeRender(earning.id || earning.purchase_id || idx)} className="p-4 grid grid-cols-6 gap-4 items-center min-w-[900px]">
+                    <div>{safeRender(earning.id || earning.purchase_id || '-')}</div>
+                    <div>{safeRender(earning.engine_name)}</div>
+                    <div>{safeRender(earning.interval || earning.earning_interval || '-')}</div>
+                    <div>
+                      KES {safeRender(
+                        earning.amount !== undefined
+                          ? earning.amount
+                          : earning.earning_amount !== undefined
+                            ? earning.earning_amount
+                            : 0
+                      )}
+                    </div>
+                    <div>{safeRender(earning.earning_datetime ? new Date(earning.earning_datetime).toLocaleString() : '')}</div>
+                    <div>{safeRender(earning.status || 'Processed')}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          {/* Pagination controls */}
+          <div className="flex justify-end space-x-2 mt-4">
+            <button disabled={earningsPage <= 1} onClick={()=>setEarningsPage(p=>p-1)} className="px-3 py-1 rounded bg-slate-700 text-white disabled:opacity-50">Prev</button>
+            <span className="text-slate-400">Page {earningsPage} of {earningsTotalPages}</span>
+            <button disabled={earningsPage >= earningsTotalPages} onClick={()=>setEarningsPage(p=>p+1)} className="px-3 py-1 rounded bg-slate-700 text-white disabled:opacity-50">Next</button>
+          </div>
+        </div>
+      )}
 
       {/* Dashboard Action Buttons */}
       <div className="bg-slate-800 rounded-lg p-4">

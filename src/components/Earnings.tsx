@@ -9,6 +9,9 @@ interface EarningsProps {
 interface Earning {
   earning_amount: string;
   earning_date: string;
+  earning_interval?: string; // 'hourly' | 'daily' | undefined
+  earning_datetime?: string;
+  engine_name?: string;
 }
 
 interface Purchase {
@@ -29,7 +32,7 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
     totalEarnings: '0.00',
     monthlyEarnings: '0.00',
     activeInvestments: 0,
-    earnings: []
+    earnings: [] as Earning[]
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -230,22 +233,46 @@ export const Earnings = ({ onNavigateToStake }: EarningsProps) => {
             <ArrowUpDown className="w-4 h-4" />
           </div>
         </div>
-        <div className="text-center py-8">
-          <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <TrendingUp className="w-8 h-8 text-slate-400" />
+        {earningsData.earnings.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <TrendingUp className="w-8 h-8 text-slate-400" />
+            </div>
+            <p className="text-slate-400">No earnings history yet.</p>
+            <p className="text-slate-500 text-sm mt-2">Start investing to see your earnings here!</p>
+            {/* Start Mining Now Button */}
+            <button
+              onClick={onNavigateToStake}
+              className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 mx-auto"
+            >
+              <Zap className="w-5 h-5" />
+              <span>Start Mining Now</span>
+            </button>
           </div>
-          <p className="text-slate-400">No earnings history yet.</p>
-          <p className="text-slate-500 text-sm mt-2">Start investing to see your earnings here!</p>
-          
-          {/* Start Mining Now Button */}
-          <button
-            onClick={onNavigateToStake}
-            className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 mx-auto"
-          >
-            <Zap className="w-5 h-5" />
-            <span>Start Mining Now</span>
-          </button>
-        </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Date/Time</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Amount (KES)</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Interval</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Engine</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700">
+                {earningsData.earnings.map((earning, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 py-2 text-slate-300 whitespace-nowrap">{earning.earning_datetime ? new Date(earning.earning_datetime).toLocaleString() : new Date(earning.earning_date).toLocaleDateString()}</td>
+                    <td className="px-4 py-2 text-green-400 font-bold whitespace-nowrap">{parseFloat(earning.earning_amount).toFixed(2)}</td>
+                    <td className="px-4 py-2 text-slate-400 whitespace-nowrap">{earning.earning_interval ? earning.earning_interval.charAt(0).toUpperCase() + earning.earning_interval.slice(1) : 'N/A'}</td>
+                    <td className="px-4 py-2 text-slate-400 whitespace-nowrap">{earning.engine_name || 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
