@@ -41,9 +41,12 @@ export const WhatsAppFloatingButton: React.FC = () => {
     dragStartMousePos.current = { x: e.clientX, y: e.clientY };
   };
 
+  const touchMoved = useRef(false);
+
   const onTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
+    // Do not preventDefault here to allow click events if no drag
     setDragging(true);
+    touchMoved.current = false;
     const touch = e.touches[0];
     dragStartPos.current = position;
     dragStartMousePos.current = { x: touch.clientX, y: touch.clientY };
@@ -70,6 +73,12 @@ export const WhatsAppFloatingButton: React.FC = () => {
     const touch = e.touches[0];
     const deltaX = touch.clientX - dragStartMousePos.current.x;
     const deltaY = touch.clientY - dragStartMousePos.current.y;
+
+    // If moved more than 5px, consider it a drag
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      touchMoved.current = true;
+    }
+
     let newX = dragStartPos.current.x + deltaX;
     let newY = dragStartPos.current.y + deltaY;
 
@@ -91,6 +100,14 @@ export const WhatsAppFloatingButton: React.FC = () => {
     if (dragging) {
       e.preventDefault();
       setDragging(false);
+    }
+  };
+
+  const onClick = (e: React.MouseEvent | React.TouchEvent) => {
+    // If touch moved, prevent click to avoid triggering link on drag
+    if (touchMoved.current) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   };
 
@@ -119,6 +136,7 @@ export const WhatsAppFloatingButton: React.FC = () => {
       style={{ position: 'fixed', left: position.x, top: position.y }}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
+      onClick={onClick}
     >
       <MessageCircle className="w-7 h-7" />
     </a>
