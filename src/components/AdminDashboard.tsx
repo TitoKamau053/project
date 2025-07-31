@@ -189,7 +189,8 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
         switch (activeTab) {
           case 'users': {
             const queryParams = new URLSearchParams();
-            queryParams.append('limit', '50');
+            // Removed limit to fetch all users without trimming
+            // queryParams.append('limit', '50');
             if (userSearch) queryParams.append('search', userSearch);
             if (userStatusFilter) queryParams.append('status', userStatusFilter);
             if (userRoleFilter) queryParams.append('role', userRoleFilter);
@@ -197,9 +198,8 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
             const usersResponse = await apiAuthFetch(`/admin/users?${queryParams.toString()}`);
             if (usersResponse && usersResponse.users) {
               setUsers(usersResponse.users);
-              if (usersResponse.pagination) {
-                setUsersPagination(usersResponse.pagination);
-              }
+              // Clear pagination as all users are fetched
+              setUsersPagination({ page: 1, total: usersResponse.users.length, pages: 1 });
             }
             break;
           }
