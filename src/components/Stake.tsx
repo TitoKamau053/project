@@ -11,6 +11,8 @@ interface MiningEngine {
   price: string;
   daily_earning_rate: string;
   duration_days: number;
+  duration_hours?: number; // Add duration_hours for hourly interval
+  earning_interval?: 'hourly' | 'daily'; // Add earning_interval property
   is_active: boolean;
   min_investment?: number;
   max_investment?: number;
@@ -32,6 +34,46 @@ export const Stake = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const profitEnginesRef = useRef<HTMLDivElement>(null);
+  
+  const[realTimeCalculations, setRealTimeCalculations]=useState<{
+    nextEarningTime?:string;
+    totalEarningPeriods?:number;
+    estimatedCompletion?:string;
+  } | null>(null);
+
+  // Real-time purchase calculations
+  const calculatePurchasePreview = useCallback((engine: MiningEngine, amount: string) => {
+    if (!engine || !amount || parseFloat(amount) <= 0) {
+      setRealTimeCalculations(null);
+      return;
+    }
+    
+    const now = new Date();
+    const nextEarning = new Date(now.getTime() + (engine.earning_interval === 'hourly' ? 60 * 60 * 1000 : 24 * 60 * 60 * 1000));
+    
+    const totalPeriods = engine.earning_interval === 'hourly' 
+      ? (engine.duration_hours ?? 24) 
+      : engine.duration_days;
+      
+    const completionTime = new Date(now.getTime() + (
+      engine.earning_interval === 'hourly' 
+        ? (engine.duration_hours ?? 24) * 60 * 60 * 1000
+        : engine.duration_days * 24 * 60 * 60 * 1000
+    ));
+   
+    setRealTimeCalculations({
+      nextEarningTime: nextEarning.toISOString(),
+      totalEarningPeriods: totalPeriods,
+      estimatedCompletion: completionTime.toISOString()
+    });
+  }, []);
+
+  // Call this when purchase amount changes
+  useEffect(() => {
+    if (engineDetails && purchaseAmount) {
+      calculatePurchasePreview(engineDetails, purchaseAmount);
+    }
+  }, [engineDetails, purchaseAmount, calculatePurchasePreview]);
 
   // Define scrollToProfitEngines function with useCallback
   const scrollToProfitEngines = useCallback(() => {

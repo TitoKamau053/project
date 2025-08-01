@@ -16,7 +16,12 @@ import {
   Filter,
   CheckCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Zap,
+  Eye,
+  Play,
+  Pause,
+  Activity
 } from 'lucide-react';
 import { apiAuthFetch, miningAPI } from '../utils/api';
 
@@ -92,6 +97,42 @@ interface MiningEngine {
   earning_interval?: 'hourly' | 'daily'; // Add this missing property
 }
 
+interface MiningOperation {
+  id: number;
+  user_id: number;
+  user_name: string;
+  user_email: string;
+  engine_id: number;
+  engine_name: string;
+  earning_interval: string;
+  amount_invested: number;
+  daily_earning: number;
+  total_earned: number;
+  periods_elapsed: number;
+  total_periods: number;
+  progress_percentage: number;
+  next_earning_time?: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  last_earning_date?: string;
+  expected_earnings: number;
+  earning_deficit: number;
+  is_earning_up_to_date: boolean;
+}
+
+interface EarningLog {
+  id: number;
+  user_id: number;
+  user_name: string;
+  engine_name: string;
+  earning_amount: number;
+  earning_datetime: string;
+  interval: string;
+  purchase_id: number;
+  status: string;
+}
+
 interface AdminDashboardProps {
   user: User | null;
   onLogout: () => void;
@@ -115,6 +156,15 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
   const [withdrawals, setWithdrawals] = useState<Transaction[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [sectionLoading, setSectionLoading] = useState(false);
+
+  // New states for mining operations and earnings tracking
+  const [miningOperations, setMiningOperations] = useState<MiningOperation[]>([]);
+  const [earningLogs, setEarningLogs] = useState<EarningLog[]>([]);
+  const [miningFilters, setMiningFilters] = useState({
+    status: 'all',
+    interval: 'all',
+    search: ''
+  });
   
   // User management states
   const [userSearch, setUserSearch] = useState('');
@@ -228,6 +278,22 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
             }
             break;
           }
+          case 'mining-operations': {
+            // Fetch all user purchases with enhanced details
+            const purchasesResponse = await apiAuthFetch('/purchases?limit=100');
+            if (purchasesResponse && purchasesResponse.purchases) {
+              setMiningOperations(purchasesResponse.purchases);
+            }
+            break;
+          }
+          case 'earnings-tracking': {
+            // Fetch earnings logs for all users
+            const earningsResponse = await apiAuthFetch('/earnings/admin/earnings?limit=200');
+            if (earningsResponse && earningsResponse.earnings) {
+              setEarningLogs(earningsResponse.earnings);
+            }
+            break;
+          }
         }
       } catch (err) {
         console.error(`Failed to fetch ${activeTab} data:`, err);
@@ -237,7 +303,7 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
     };
 
     fetchSectionData();
-  }, [activeTab, userSearch, userStatusFilter, userRoleFilter]);
+  }, [activeTab, userSearch, userStatusFilter, userRoleFilter, miningFilters]);
 
   // Action handlers for admin operations
   const handleApproveDeposit = async (depositId: number) => {
@@ -712,6 +778,8 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'mining-operations', label: 'Mining Operations', icon: Zap },
+    { id: 'earnings-tracking', label: 'Earnings Tracking', icon: TrendingUp },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'deposits', label: 'Deposits', icon: ArrowDownRight },
     { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpRight },
@@ -1038,6 +1106,10 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
     switch (activeTab) {
       case 'overview':
         return renderOverview();
+      case 'mining-operations':
+        return renderMiningOperations();
+      case 'earnings-tracking':
+        return renderEarningsTracking();
       case 'users':
         return renderUserManagement();
       case 'deposits':
@@ -1055,6 +1127,327 @@ export const AdminDashboard = ({ user, onLogout }: AdminDashboardProps) => {
       default:
         return renderOverview();
     }
+  };
+
+  const renderMiningOperations = () => {
+    const filteredOperations = miningOperations.filter(op => {
+      const matchesStatus = miningFilters.status === 'all' || op.status === miningFilters.status;
+      const matchesInterval = miningFilters.interval === 'all' || op.earning_interval === miningFilters.interval;
+      const matchesSearch = !miningFilters.search || 
+        op.user_name?.toLowerCase().includes(miningFilters.search.toLowerCase()) ||
+        op.engine_name?.toLowerCase().includes(miningFilters.search.toLowerCase()) ||
+        op.user_email?.toLowerCase().includes(miningFilters.search.toLowerCase());
+      
+      return matchesStatus && matchesInterval && matchesSearch;
+    });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-white text-2xl font-bold">Mining Operations Tracking</h2>
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search operations..."
+                value={miningFilters.search}
+                onChange={(e) => setMiningFilters(prev => ({ ...prev, search: e.target.value }))}
+                className="bg-slate-700 text-white pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <select
+              value={miningFilters.status}
+              onChange={(e) => setMiningFilters(prev => ({ ...prev, status: e.target.value }))}
+              className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <select
+              value={miningFilters.interval}
+              onChange={(e) => setMiningFilters(prev => ({ ...prev, interval: e.target.value }))}
+              className="bg-slate-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="all">All Intervals</option>
+              <option value="hourly">Hourly</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <Activity className="w-8 h-8 text-green-500" />
+              <div>
+                <p className="text-white font-bold">{miningOperations.filter(op => op.status === 'active').length}</p>
+                <p className="text-slate-400 text-sm">Active Operations</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-8 h-8 text-blue-500" />
+              <div>
+                <p className="text-white font-bold">{miningOperations.filter(op => op.status === 'completed').length}</p>
+                <p className="text-slate-400 text-sm">Completed</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <DollarSign className="w-8 h-8 text-purple-500" />
+              <div>
+                <p className="text-white font-bold">
+                  KES {miningOperations.reduce((sum, op) => sum + (op.amount_invested || 0), 0).toLocaleString()}
+                </p>
+                <p className="text-slate-400 text-sm">Total Investment</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <TrendingUp className="w-8 h-8 text-orange-500" />
+              <div>
+                <p className="text-white font-bold">
+                  KES {miningOperations.reduce((sum, op) => sum + (op.total_earned || 0), 0).toLocaleString()}
+                </p>
+                <p className="text-slate-400 text-sm">Total Earned</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Operations Table */}
+        <div className="bg-slate-800 rounded-lg overflow-hidden">
+          <div className="p-4 border-b border-slate-700">
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-8 gap-4 min-w-[1200px] text-slate-400 text-sm font-medium">
+                <div>User</div>
+                <div>Engine</div>
+                <div>Investment</div>
+                <div>Earned</div>
+                <div>Progress</div>
+                <div>Status</div>
+                <div>Next Earning</div>
+                <div>Actions</div>
+              </div>
+            </div>
+
+            <div className="divide-y divide-slate-700 max-h-96 overflow-y-auto">
+              {sectionLoading ? (
+                <div className="p-8 text-center">
+                  <div className="text-slate-400">Loading mining operations...</div>
+                </div>
+              ) : filteredOperations.length === 0 ? (
+                <div className="p-8 text-center">
+                  <div className="text-slate-400">No mining operations found</div>
+                </div>
+              ) : (
+                filteredOperations.map((operation) => (
+                  <div key={operation.id} className="p-4">
+                    <div className="grid grid-cols-8 gap-4 items-center min-w-[1200px]">
+                      <div>
+                        <div className="font-medium text-white truncate max-w-[150px]" title={operation.user_name}>
+                          {operation.user_name || `User ${operation.user_id}`}
+                        </div>
+                        <div className="text-slate-400 text-sm">{operation.user_email}</div>
+                      </div>
+
+                      <div>
+                        <div className="text-white font-medium">{operation.engine_name}</div>
+                        <div className="text-slate-400 text-sm">{operation.earning_interval}</div>
+                      </div>
+
+                      <div>
+                        <div className="text-white font-medium">KES {operation.amount_invested?.toLocaleString()}</div>
+                        <div className="text-slate-400 text-sm">
+                          KES {operation.daily_earning?.toLocaleString()}/day
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-green-400 font-medium">
+                          KES {operation.total_earned?.toLocaleString() || '0.00'}
+                        </div>
+                        {operation.earning_deficit && operation.earning_deficit > 0.01 && (
+                          <div className="text-yellow-400 text-sm">
+                            Deficit: KES {operation.earning_deficit.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
+                          <div 
+                            className="bg-gradient-to-r from-orange-500 to-yellow-500 h-2 rounded-full"
+                            style={{ width: `${Math.min(100, operation.progress_percentage || 0)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-slate-400 text-sm">
+                          {typeof operation.progress_percentage === 'number' ? operation.progress_percentage.toFixed(1) : 'N/A'}% ({operation.periods_elapsed}/{operation.total_periods})
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          operation.status === 'active'
+                            ? 'bg-green-500/20 text-green-400'
+                            : operation.status === 'completed'
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-red-500/20 text-red-400'
+                        }`}>
+                          {operation.status}
+                        </span>
+                        {!operation.is_earning_up_to_date && (
+                          <div className="text-yellow-400 text-xs mt-1">Delayed</div>
+                        )}
+                      </div>
+
+                      <div>
+                        {operation.next_earning_time ? (
+                          <div className="text-slate-300 text-sm">
+                            {new Date(operation.next_earning_time).toLocaleDateString()}
+                          </div>
+                        ) : (
+                          <div className="text-slate-500 text-sm">-</div>
+                        )}
+                      </div>
+
+                      <div className="flex space-x-1">
+                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                          <Eye className="w-3 h-3" />
+                        </button>
+                        {operation.status === 'active' && (
+                          <button className="bg-orange-600 hover:bg-orange-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                            <Pause className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderEarningsTracking = () => {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-white text-2xl font-bold">Earnings Tracking</h2>
+        
+        {/* Earnings Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <TrendingUp className="w-8 h-8 text-green-500" />
+              <div>
+                <p className="text-white font-bold">
+                  {earningLogs.length}
+                </p>
+                <p className="text-slate-400 text-sm">Total Earnings</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <DollarSign className="w-8 h-8 text-blue-500" />
+              <div>
+                <p className="text-white font-bold">
+                  KES {earningLogs.reduce((sum, log) => sum + (log.earning_amount || 0), 0).toLocaleString()}
+                </p>
+                <p className="text-slate-400 text-sm">Total Amount</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <Clock className="w-8 h-8 text-orange-500" />
+              <div>
+                <p className="text-white font-bold">
+                  {earningLogs.filter(log => {
+                    const today = new Date().toDateString();
+                    return new Date(log.earning_datetime).toDateString() === today;
+                  }).length}
+                </p>
+                <p className="text-slate-400 text-sm">Today's Earnings</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-slate-800 rounded-lg p-4">
+            <div className="flex items-center space-x-3">
+              <Users className="w-8 h-8 text-purple-500" />
+              <div>
+                <p className="text-white font-bold">
+                  {new Set(earningLogs.map(log => log.user_id)).size}
+                </p>
+                <p className="text-slate-400 text-sm">Earning Users</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Earnings Log Table */}
+        <div className="bg-slate-800 rounded-lg overflow-hidden">
+          <div className="p-4 border-b border-slate-700">
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-6 gap-4 min-w-[900px] text-slate-400 text-sm font-medium">
+                <div>User</div>
+                <div>Engine</div>
+                <div>Amount</div>
+                <div>Interval</div>
+                <div>Date/Time</div>
+                <div>Status</div>
+              </div>
+            </div>
+            
+            <div className="divide-y divide-slate-700 max-h-96 overflow-y-auto">
+              {sectionLoading ? (
+                <div className="p-8 text-center">
+                  <div className="text-slate-400">Loading earnings logs...</div>
+                </div>
+              ) : earningLogs.length === 0 ? (
+                <div className="p-8 text-center">
+                  <div className="text-slate-400">No earnings logs found</div>
+                </div>
+              ) : (
+                earningLogs.map((log) => (
+                  <div key={log.id} className="p-4">
+                    <div className="grid grid-cols-6 gap-4 items-center min-w-[900px]">
+                      <div>
+                        <div className="font-medium text-white">{log.user_name || `User ${log.user_id}`}</div>
+                        <div className="text-slate-400 text-sm">ID: {log.user_id}</div>
+                      </div>
+                      <div className="text-slate-300">{log.engine_name}</div>
+                      <div className="text-green-400 font-medium">
+                        KES {log.earning_amount?.toLocaleString()}
+                      </div>
+                      <div className="text-slate-300">{log.interval}</div>
+                      <div className="text-slate-400 text-sm">
+                        {new Date(log.earning_datetime).toLocaleString()}
+                      </div>
+                      <div>
+                        <span className="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400">
+                          {log.status || 'Processed'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
 const renderUserManagement = () => (

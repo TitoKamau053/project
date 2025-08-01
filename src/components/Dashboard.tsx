@@ -293,7 +293,7 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-2 gap-4">
         <div className="bg-slate-800 rounded-lg p-3 sm:p-4">
           <div className="flex items-center space-x-2 mb-2">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
@@ -318,6 +318,16 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
                   </li>
                 ))}
               </ul>
+              {/* Add total investment display */}
+              <div className="mt-2 pt-2 border-t border-slate-600">
+                <div className="text-slate-400 text-xs mb-1">Total Investment</div>
+                <div className="text-orange-400 text-sm font-bold">
+                  KES {activeEngines.reduce((sum, engine) => {
+                    const amount = parseFloat(engine.amount_invested) || 0;
+                    return sum + amount;
+                  }, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
             </div>
           )}
           {completedEngines.length > 0 && (
@@ -326,8 +336,26 @@ export const Dashboard = ({ onActivateMine, onShowTransactions, onShowMiningPack
               <ul className="space-y-1">
                 {completedEngines.map((engine) => (
                   <li key={safeRender(engine.id)} className="text-white text-xs bg-slate-700 rounded px-2 py-1 flex justify-between items-center">
-                    <div>{safeRender(engine.interval ?? engine.earning_interval ?? '-')}</div>
-                    <span className="text-orange-400">Completed</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{safeRender(engine.engine_name || engine.name)}</span>
+                      <span className="text-slate-400 text-xs">
+                        KES {parseFloat(engine.amount_invested || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} invested
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-green-400 text-xs block">+KES {parseFloat(engine.total_earned || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span className="text-slate-400 text-xs">
+                        {(() => {
+                          const invested = parseFloat(engine.amount_invested || 0);
+                          const earned = parseFloat(engine.total_earned || 0);
+                          if (invested > 0) {
+                            const roi = ((earned / invested) * 100);
+                            return `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
+                          }
+                          return '0%';
+                        })()}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>

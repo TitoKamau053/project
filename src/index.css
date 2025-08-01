@@ -16,3 +16,36 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+
+/* Add to your CSS file or as a style tag */
+.countdown-timer {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .countdown-timer {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+  
+  .progress-bar-mobile {
+    height: 8px;
+    border-radius: 4px;
+  }
+  
+  .mining-card-mobile {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}

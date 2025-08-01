@@ -159,17 +159,17 @@ export const TransactionHistory = ({ onBack }: TransactionHistoryProps) => {
     }
   };
 
-  const totalStats = {
-    totalDeposits: transactions
-      .filter(t => t.type === 'deposit' && t.status === 'completed')
-      .reduce((sum, t) => sum + t.amount, 0),
-    totalWithdrawals: transactions
-      .filter(t => t.type === 'withdrawal' && t.status === 'completed')
-      .reduce((sum, t) => sum + t.amount, 0),
-    totalEarnings: transactions
-      .filter(t => (t.type === 'mining' || t.type === 'referral') && t.status === 'completed')
-      .reduce((sum, t) => sum + t.amount, 0)
-  };
+    const totalStats = {
+      totalDeposits: transactions
+        .filter(t => t.type === 'deposit' && t.status === 'completed')
+        .reduce((sum, t) => sum + (parseFloat(t.amount?.toString() || '0') || 0), 0),
+      totalWithdrawals: transactions
+        .filter(t => t.type === 'withdrawal' && t.status === 'completed')  
+        .reduce((sum, t) => sum + (parseFloat(t.amount?.toString() || '0') || 0), 0),
+      totalEarnings: transactions
+        .filter(t => (t.type === 'mining' || t.type === 'referral') && t.status === 'completed')
+        .reduce((sum, t) => sum + (parseFloat(t.amount?.toString() || '0') || 0), 0)
+    };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -198,23 +198,26 @@ export const TransactionHistory = ({ onBack }: TransactionHistoryProps) => {
           <div className="bg-slate-800 rounded-lg p-4">
             <p className="text-slate-400 text-sm">Total Deposits</p>
             <p className="text-green-500 text-lg font-bold">
-              KES {totalStats.totalDeposits.toLocaleString()}
+              KES {totalStats.totalDeposits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
           <div className="bg-slate-800 rounded-lg p-4">
             <p className="text-slate-400 text-sm">Total Withdrawn</p>
             <p className="text-orange-500 text-lg font-bold">
-              KES {totalStats.totalWithdrawals.toLocaleString()}
+              KES {totalStats.totalWithdrawals.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
           <div className="bg-slate-800 rounded-lg p-4">
             <p className="text-slate-400 text-sm">Total Earnings</p>
             <p className="text-blue-500 text-lg font-bold">
-              KES {totalStats.totalEarnings.toLocaleString()}
+              KES {totalStats.totalEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            {/* Add debug info temporarily */}
+            <p className="text-slate-500 text-xs mt-1">
+              ({transactions.filter(t => (t.type === 'mining' || t.type === 'referral') && t.status === 'completed').length} earning transactions)
             </p>
           </div>
         </div>
-
         {/* Filters */}
         <div className="bg-slate-800 rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">

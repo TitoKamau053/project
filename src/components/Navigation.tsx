@@ -10,40 +10,42 @@ export const Navigation = ({ activeTab, setActiveTab, onSupportClick }: Navigati
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'mining', label: 'Active Engine', icon: Zap },
-    { id: 'stake', label: 'Stake', icon: DollarSign },
+    { id: 'stake', label: 'Mine', icon: DollarSign },
     { id: 'earnings', label: 'Earnings', icon: TrendingUp },
     { id: 'network', label: 'Network', icon: Users },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700">
+    <nav className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50">
       <div className="flex justify-around py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+          
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-                isActive 
-                  ? 'text-orange-500 bg-slate-700' 
-                  : 'text-slate-400 hover:text-orange-400'
+              className={`flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 ${
+                isActive
+                  ? 'text-orange-500 bg-slate-700 scale-105'
+                  : 'text-slate-400 hover:text-orange-400 hover:bg-slate-700/50'
               }`}
             >
-              <Icon className="w-5 h-5 mb-1" />
-              <span className="text-xs">{item.label}</span>
+              <Icon className={`w-5 h-5 mb-1 ${isActive ? 'animate-pulse' : ''}`} />
+              <span className="text-xs font-medium">{item.label}</span>
             </button>
           );
         })}
+        
         {/* Support Button */}
         {onSupportClick && (
           <button
             onClick={onSupportClick}
-            className="flex flex-col items-center py-2 px-3 rounded-lg transition-colors text-slate-400 hover:text-orange-400"
+            className="flex flex-col items-center py-2 px-3 rounded-lg transition-all duration-200 text-slate-400 hover:text-orange-400 hover:bg-slate-700/50"
           >
             <HelpCircle className="w-5 h-5 mb-1" />
-            <span className="text-xs">Help</span>
+            <span className="text-xs font-medium">Help</span>
           </button>
         )}
       </div>
