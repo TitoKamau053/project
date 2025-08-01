@@ -471,16 +471,16 @@ export const MiningNow = () => {
                   </div>
 
                   {/* Warning for earning deficit */}
-                  {purchase.earning_deficit > 0.01 && (
-                    <div className="mt-3 bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-2">
-                      <div className="flex items-center space-x-2">
-                        <AlertCircle className="w-4 h-4 text-yellow-400" />
-                        <span className="text-yellow-400 text-sm">
-                          Earnings processing delayed (KES {purchase.earning_deficit.toFixed(2)} pending)
-                        </span>
-                      </div>
-                    </div>
-                  )}
+{Number(purchase.earning_deficit) > 0.01 && (
+  <div className="mt-3 bg-yellow-600/20 border border-yellow-600/30 rounded-lg p-2">
+    <div className="flex items-center space-x-2">
+      <AlertCircle className="w-4 h-4 text-yellow-400" />
+      <span className="text-yellow-400 text-sm">
+        Earnings processing delayed (KES {Number(purchase.earning_deficit).toFixed(2)} pending)
+      </span>
+    </div>
+  </div>
+)}
                 </div>
               ))
             )}
