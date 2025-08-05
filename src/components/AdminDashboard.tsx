@@ -1606,9 +1606,9 @@ KES {(user.balance || 0).toLocaleString()}
 
 <div className="text-slate-400 text-sm">
 {/* {new Date(user.created_at).toLocaleDateString()} */}
-<div>{safeRender(earning.earning_datetime ? new Date(earning.earning_datetime).toLocaleString() : '')}</div>
+<div>{safeRender(user.earning_datetime ? new Date(user.created_at).toLocaleString() : '')}</div>
 
-{ new Date(user.created_at).toISOString().split('T')[0] }
+{ new Date(user.created_at).toLocaleString() }
 </div>
 
 <div className="flex flex-wrap gap-2">
@@ -1787,7 +1787,7 @@ deposit.status === 'completed'
 </div>
 <div className="text-slate-400 text-sm">
 {/* {new Date(deposit.created_at).toLocaleDateString()} */}
-{ new Date(deposit.created_at).toISOString().split('T')[0] }
+{ new Date(deposit.created_at).toLocaleString() }
 </div>
 <div className="flex flex-wrap gap-2">
 {deposit.status === 'pending' && (
@@ -1959,7 +1959,7 @@ withdrawal.status === 'completed'
 </div>
 <div className="text-slate-400 text-sm">
 {/* {new Date(withdrawal.created_at).toLocaleDateString()} */}
-{ new Date(withdrawal.created_at).toISOString().split('T')[0] }
+{ new Date(withdrawal.created_at).toLocaleString() }
 </div>
 <div className="flex space-x-2 flex-wrap gap-2">
 {withdrawal.status === 'pending' && (
