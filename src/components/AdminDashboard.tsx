@@ -1531,7 +1531,7 @@ Next
 <div>Role</div>
 <div>Status</div>
 <div>Balance</div>
-<div> </div>
+<div> Refered By</div>
 <div>Joined</div>
 <div>Actions</div>
 </div>
