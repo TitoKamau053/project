@@ -240,7 +240,7 @@ switch (activeTab) {
 case 'users': {
 const queryParams = new URLSearchParams();
 // Removed limit to fetch all users without trimming
-// queryParams.append('limit', '50');
+queryParams.append('limit', '500');
 if (userSearch) queryParams.append('search', userSearch);
 if (userStatusFilter) queryParams.append('status', userStatusFilter);
 if (userRoleFilter) queryParams.append('role', userRoleFilter);
@@ -280,7 +280,7 @@ break;
 }
 case 'mining-operations': {
 // Fetch all user purchases with enhanced details
-const purchasesResponse = await apiAuthFetch('/purchases?limit=100');
+const purchasesResponse = await apiAuthFetch('/purchases?limit=500');
 if (purchasesResponse && purchasesResponse.purchases) {
 setMiningOperations(purchasesResponse.purchases);
 }
