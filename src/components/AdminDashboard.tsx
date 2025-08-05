@@ -1531,7 +1531,7 @@ Next
 <div>Role</div>
 <div>Status</div>
 <div>Balance</div>
-<div></div>
+<div> </div>
 <div>Joined</div>
 <div>Actions</div>
 </div>
@@ -1606,7 +1606,7 @@ KES {(user.balance || 0).toLocaleString()}
 
 <div className="text-slate-400 text-sm">
 {/* {new Date(user.created_at).toLocaleDateString()} */}
-<div>{safeRender(user.earning_datetime ? new Date(user.created_at).toLocaleString() : '')}</div>
+<div>{safeRender(user.created_at ? new Date(user.created_at).toLocaleString() : '')}</div>
 
 { new Date(user.created_at).toLocaleString() }
 </div>
